@@ -68,7 +68,7 @@ async function startServer() {
       category: category as string,
       status: status as string,
       search: search as string,
-      window: (window as any) || '3h',
+      window: (window as any) || 'all',
     });
     res.json(flights);
   });

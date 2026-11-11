@@ -52,7 +52,7 @@ export default function App() {
     status: 'all',
     searchQuery: '',
     watchlistOnly: false,
-    window: '3h',
+    window: 'all',
   });
   const [isSyncingFeed, setIsSyncingFeed] = useState<boolean>(false);
 

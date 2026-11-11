@@ -55,8 +55,8 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
         (flight.origin.code === 'KHI' && flight.destination.code === 'KHI' && flight.telemetry && flight.telemetry.altitudeFt < 1000 && flight.telemetry.groundSpeedKnots < 130);
       if (isGroundVehicle) return false;
 
-      // 0b. Operational Time Window filter: Current hour with flights departing 3h before and 3h later (±3.25h)
-      const windowMode = filters.window || '3h';
+      // 0b. Operational Time Window filter: Defaults to 'all' so full schedule is visible
+      const windowMode = filters.window || 'all';
       if (windowMode !== 'all') {
         const nowMs = Date.now();
         const schedMs = new Date(flight.scheduledTime).getTime();
@@ -227,13 +227,24 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
               <span className="hidden sm:inline">Window:</span>
             </span>
             <button
-              onClick={() => setFilters(prev => ({ ...prev, window: '3h' }))}
+              onClick={() => setFilters(prev => ({ ...prev, window: 'all' }))}
               className={`px-2.5 py-1.5 text-xs font-semibold rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                (filters.window || '3h') === '3h'
+                (!filters.window || filters.window === 'all')
                   ? 'bg-amber-500 text-slate-950 shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title="Current hour operations: flights departing/arriving 3 hours before and 3 hours later"
+              title="Full 24-hour daily flight schedule"
+            >
+              Full Day ({flights.length})
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, window: '3h' }))}
+              className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
+                filters.window === '3h'
+                  ? 'bg-amber-500 text-slate-950 font-semibold shadow-xs'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Flights operating within ±3 hours of current time"
             >
               Current (±3h)
             </button>
@@ -241,23 +252,12 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
               onClick={() => setFilters(prev => ({ ...prev, window: '6h' }))}
               className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
                 filters.window === '6h'
-                  ? 'bg-slate-800 text-white font-semibold'
+                  ? 'bg-amber-500 text-slate-950 font-semibold shadow-xs'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
               title="Next 6 hours of flight operations"
             >
               Next 6h
-            </button>
-            <button
-              onClick={() => setFilters(prev => ({ ...prev, window: 'all' }))}
-              className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 ${
-                filters.window === 'all'
-                  ? 'bg-slate-800 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Full 24-hour flight schedule"
-            >
-              Full Day (24h)
             </button>
           </div>
 

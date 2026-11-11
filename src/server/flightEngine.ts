@@ -1453,9 +1453,8 @@ export class KarachiFlightEngine {
       return !isGroundVeh;
     });
 
-    // Operational window filter:
-    // User requirement: "display board should be for current hour with flights departing 3 hours before and 3 hours later"
-    const windowMode = params?.window || '3h';
+    // Operational window filter (default to 'all' so full schedule is visible):
+    const windowMode = params?.window || 'all';
     if (windowMode !== 'all') {
       const nowMs = Date.now();
       result = result.filter(f => {
