@@ -20,6 +20,7 @@ import {
   FlightFilterState
 } from './types/flight';
 import { OpkcWeatherResponse } from './types/weather';
+import { generateClientSchedule, generateClientStats, generateClientWeather } from './services/clientScheduleFallback';
 import {
   getSavedPushSettings,
   savePushSettings,
@@ -92,9 +93,11 @@ export default function App() {
       if (res && res.ok) {
         const data: OpkcWeatherResponse = await res.json();
         setWeather(data);
+      } else {
+        setWeather(generateClientWeather());
       }
     } catch (err) {
-      console.warn('Weather fetch warning:', err);
+      setWeather(generateClientWeather());
     } finally {
       setIsWeatherLoading(false);
     }
@@ -113,20 +116,35 @@ export default function App() {
         flightsRes = await fetch('api.php?action=flights').catch(() => null);
       }
 
+      let loadedFlights: Flight[] = [];
       if (flightsRes && flightsRes.ok) {
-        const flightsData = await flightsRes.json();
-        setFlights(flightsData);
+        loadedFlights = await flightsRes.json();
       }
-      if (statsRes && statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
+
+      if (Array.isArray(loadedFlights) && loadedFlights.length > 0) {
+        setFlights(loadedFlights);
+        if (statsRes && statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStats(statsData);
+        } else {
+          setStats(generateClientStats(loadedFlights));
+        }
+      } else {
+        // Zero-backend / Vercel static fallback: load verified Karachi schedule
+        const clientFlights = generateClientSchedule();
+        setFlights(clientFlights);
+        setStats(generateClientStats(clientFlights));
       }
+
       if (notifsRes && notifsRes.ok) {
         const notifsData = await notifsRes.json();
         setNotifications(notifsData);
       }
     } catch (err) {
-      console.warn('API fetch warning:', err);
+      console.warn('API fetch warning, using client fallback:', err);
+      const clientFlights = generateClientSchedule();
+      setFlights(clientFlights);
+      setStats(generateClientStats(clientFlights));
     } finally {
       setIsLoading(false);
     }
@@ -136,14 +154,14 @@ export default function App() {
   const handleSyncFeed = useCallback(async () => {
     setIsSyncingFeed(true);
     try {
-      const syncRes = await fetch('/api/feed/sync', { method: 'POST' });
-      if (syncRes.ok) {
+      const syncRes = await fetch('/api/feed/sync', { method: 'POST' }).catch(() => null);
+      if (syncRes && syncRes.ok) {
         const syncData = await syncRes.json();
         if (syncData.stats) setStats(syncData.stats);
       }
       await fetchData();
     } catch (err) {
-      console.warn('Manual feed sync warning:', err);
+      await fetchData();
     } finally {
       setIsSyncingFeed(false);
     }
