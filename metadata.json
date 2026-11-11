@@ -1,0 +1,10 @@
+{
+  "name": "Karachi Airport Flight Radar & Live Push Alerts (KHI / OPKC)",
+  "description": "Real-time arrival and departure flight radar tracker for Karachi Jinnah International Airport (KHI / OPKC), featuring local and international flight schedules, gate delay updates, terminal maps, and instant push notifications.",
+  "requestFramePermissions": [
+    "notifications"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

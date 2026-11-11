@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#090D16"/>
+  <!-- Radar circles -->
+  <circle cx="256" cy="256" r="200" stroke="#1E293B" stroke-width="4" stroke-dasharray="8 8"/>
+  <circle cx="256" cy="256" r="140" stroke="#1E293B" stroke-width="4"/>
+  <circle cx="256" cy="256" r="80" stroke="#0284C7" stroke-width="2" stroke-opacity="0.4"/>
+  
+  <!-- Crosshairs -->
+  <line x1="256" y1="36" x2="256" y2="476" stroke="#1E293B" stroke-width="2"/>
+  <line x1="36" y1="256" x2="476" y2="256" stroke="#1E293B" stroke-width="2"/>
+  
+  <!-- Radar sweep gradient -->
+  <defs>
+    <linearGradient id="sweep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Radar beam cone -->
+  <path d="M 256 256 L 398 114 A 200 200 0 0 0 256 56 Z" fill="url(#sweep)"/>
+
+  <!-- Stylized Airplane Centered -->
+  <g transform="translate(256 256) rotate(-45) translate(-36 -36)">
+    <path d="M36 6 L44 26 L66 32 L66 40 L44 42 L42 60 L50 66 L50 72 L36 68 L22 72 L22 66 L30 60 L28 42 L6 40 L6 32 L28 26 Z" fill="url(#gold)"/>
+  </g>
+
+  <!-- KHI Code Badge -->
+  <rect x="186" y="380" width="140" height="42" rx="8" fill="#0F172A" stroke="#334155" stroke-width="2"/>
+  <text x="256" y="409" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="22" fill="#F8FAFC" letter-spacing="4">OPKC</text>
+  
+  <!-- Live Signal Dot -->
+  <circle cx="360" cy="180" r="6" fill="#10B981"/>
+  <circle cx="360" cy="180" r="14" stroke="#10B981" stroke-width="2" stroke-opacity="0.5"/>
+</svg>

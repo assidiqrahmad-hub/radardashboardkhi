@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <script>
+      // In AI Studio Build sandbox environment, HMR is disabled (DISABLE_HMR=true).
+      // Intercept Vite HMR WebSocket connection to prevent unhandled rejection errors.
+      (function() {
+        const NativeWebSocket = window.WebSocket;
+        if (!NativeWebSocket) return;
+
+        class ViteHmrMockSocket extends EventTarget {
+          constructor() {
+            super();
+            this.readyState = 1; // WebSocket.OPEN
+            this.OPEN = 1;
+            this.CONNECTING = 0;
+            this.CLOSING = 2;
+            this.CLOSED = 3;
+            this.url = '';
+            this.protocol = 'vite-hmr';
+            this.bufferedAmount = 0;
+            this.binaryType = 'blob';
+            this.onopen = null;
+            this.onclose = null;
+            this.onerror = null;
+            this.onmessage = null;
+          }
+          send() {}
+          close() {
+            this.readyState = 3;
+          }
+        }
+
+        window.WebSocket = function(url, protocols) {
+          if (
+            protocols === 'vite-hmr' ||
+            protocols === 'vite-ping' ||
+            (Array.isArray(protocols) && (protocols.includes('vite-hmr') || protocols.includes('vite-ping')))
+          ) {
+            return new ViteHmrMockSocket();
+          }
+          return new NativeWebSocket(url, protocols);
+        };
+
+        window.WebSocket.prototype = NativeWebSocket.prototype;
+        window.WebSocket.CONNECTING = NativeWebSocket.CONNECTING;
+        window.WebSocket.OPEN = NativeWebSocket.OPEN;
+        window.WebSocket.CLOSING = NativeWebSocket.CLOSING;
+        window.WebSocket.CLOSED = NativeWebSocket.CLOSED;
+
+        window.addEventListener('unhandledrejection', function(event) {
+          if (
+            event.reason &&
+            (String(event.reason.message || event.reason).includes('WebSocket') ||
+             String(event.reason.stack || '').includes('@vite/client'))
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, true);
+      })();
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Karachi Airport Flight Radar & Live Push Alerts (KHI / OPKC)</title>
+    <meta name="description" content="Real-time arrival and departure flight radar tracker for Karachi Jinnah International Airport (KHI / OPKC), featuring local and international flight schedules, gate delay updates, terminal maps, and instant push notifications." />
+    <meta property="og:title" content="Karachi Airport Flight Radar & Live Push Alerts (KHI / OPKC)" />
+    <meta property="og:description" content="Real-time arrival and departure flight radar tracker for Karachi Jinnah International Airport (KHI / OPKC), featuring local and international flight schedules, gate delay updates, terminal maps, and instant push notifications." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#090d16" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KHI Radar" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

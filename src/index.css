@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Radar Sweep Keyframes */
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 5s linear infinite;
+  transform-origin: center center;
+}
+
+/* Pulse animation for radar blips */
+@keyframes radar-blip-pulse {
+  0%, 100% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.6);
+  }
+}
+
+.animate-radar-blip {
+  animation: radar-blip-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* FIDS Flip / Update flash */
+@keyframes fids-flash {
+  0% {
+    background-color: rgba(245, 158, 11, 0.25);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.fids-updated {
+  animation: fids-flash 1.5s ease-out;
+}

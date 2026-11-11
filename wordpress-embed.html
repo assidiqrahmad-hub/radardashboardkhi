@@ -1,0 +1,60 @@
+<!-- ======================================================================= -->
+<!-- KARACHI JINNAH INTERNATIONAL AIRPORT (KHI / OPKC) FLIGHT RADAR EMBED    -->
+<!-- Copy and paste this code into a "Custom HTML" block in WordPress        -->
+<!-- Works in Gutenberg, Elementor, Divi, Beaver Builder, and Classic Editor -->
+<!-- ======================================================================= -->
+
+<div id="khi-radar-wrapper" style="position: relative; width: 100%; max-width: 1440px; margin: 0 auto; padding: 0;">
+  <!-- Responsive Radar Container -->
+  <div id="khi-radar-container" style="position: relative; width: 100%; min-height: 820px; height: 90vh; border-radius: 16px; overflow: hidden; background-color: #090d16; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.08);">
+    
+    <!-- Loading placeholder while live data connects -->
+    <div id="khi-radar-loader" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #090d16; color: #94a3b8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; gap: 12px; z-index: 1;">
+      <div style="width: 36px; height: 36px; border: 3px solid rgba(245, 158, 11, 0.2); border-top-color: #f59e0b; border-radius: 50%; animation: khiSpin 0.9s linear infinite;"></div>
+      <div style="font-weight: 600; color: #f8fafc; letter-spacing: -0.2px;">Connecting to Karachi Jinnah Airport (OPKC)...</div>
+      <div style="font-size: 12px; color: #64748b;">Live flight boards, transponder radar, METAR weather, and push notifications</div>
+    </div>
+
+    <!-- Live Application iFrame -->
+    <iframe
+      id="khi-flight-frame"
+      src="https://ais-pre-g5oevaiwsxiqlrhf73dwjk-800998967132.asia-northeast1.run.app"
+      style="position: relative; width: 100%; height: 100%; border: none; display: block; z-index: 2;"
+      allow="geolocation; notifications; autoplay"
+      loading="lazy"
+      title="Karachi Airport Live Flight Radar & Push Alerts"
+      onload="var l = document.getElementById('khi-radar-loader'); if (l) { l.style.opacity = '0'; setTimeout(function(){ l.style.display = 'none'; }, 300); }"
+    ></iframe>
+  </div>
+
+  <!-- Optional Subtitle / Credit Footer -->
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #64748b;">
+    <span>Karachi Jinnah International Airport (IATA: KHI · ICAO: OPKC) Real-Time Telemetry</span>
+    <a href="https://ais-pre-g5oevaiwsxiqlrhf73dwjk-800998967132.asia-northeast1.run.app" target="_blank" rel="noopener noreferrer" style="color: #f59e0b; text-decoration: none; font-weight: 500;">
+      Open Full Screen ↗
+    </a>
+  </div>
+</div>
+
+<style>
+  @keyframes khiSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+
+<script>
+  // Automatic responsive viewport height scaling for WordPress themes
+  (function() {
+    function adjustHeight() {
+      var container = document.getElementById('khi-radar-container');
+      if (container && window.innerHeight) {
+        var calculated = window.innerHeight - 100;
+        container.style.height = Math.max(780, calculated) + 'px';
+      }
+    }
+    window.addEventListener('resize', adjustHeight);
+    window.addEventListener('orientationchange', adjustHeight);
+    adjustHeight();
+  })();
+</script>
