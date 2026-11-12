@@ -257,34 +257,70 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({
           </div>
 
           {/* Aircraft & Radar Telemetry */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-            <h4 className="font-bold text-white text-xs">Live Telemetry & Transponder ADS-B</h4>
+          {/* Aircraft & Radar Telemetry */}
+          <div className="p-4 rounded-xl bg-slate-800 border border-slate-700 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-white text-xs">Live Telemetry & Transponder ADS-B</h4>
+              <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+                {flight.liveDataSource || 'adsb.fi + ADS-B DB Feeder'}
+              </span>
+            </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono">
               <div>
-                <span className="text-[10px] text-slate-400 block">Altitude</span>
-                <span className="text-cyan-400 font-bold tabular-nums">
+                <span className="text-[10px] text-slate-300 block font-sans">Altitude</span>
+                <span className="text-cyan-300 font-bold text-sm tabular-nums">
                   {flight.telemetry.altitudeFt.toLocaleString()} ft
                 </span>
+                {flight.telemetry.altitudeGeomFt && (
+                  <span className="text-[10px] text-slate-400 block">Geom: {flight.telemetry.altitudeGeomFt.toLocaleString()} ft</span>
+                )}
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block">Ground Speed</span>
-                <span className="text-white font-bold tabular-nums">
+                <span className="text-[10px] text-slate-300 block font-sans">Ground Speed</span>
+                <span className="text-white font-bold text-sm tabular-nums">
                   {flight.telemetry.groundSpeedKnots} kts
                 </span>
+                <span className="text-[10px] text-slate-400 block">Mach ~{(flight.telemetry.groundSpeedKnots / 575).toFixed(2)}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block">Heading</span>
-                <span className="text-white font-bold tabular-nums">
+                <span className="text-[10px] text-slate-300 block font-sans">Heading & Track</span>
+                <span className="text-white font-bold text-sm tabular-nums">
                   {flight.telemetry.heading}°
                 </span>
+                {flight.telemetry.verticalRateFpm !== undefined && (
+                  <span className={`text-[10px] font-bold block ${flight.telemetry.verticalRateFpm > 100 ? 'text-emerald-400' : flight.telemetry.verticalRateFpm < -100 ? 'text-amber-400' : 'text-slate-400'}`}>
+                    {flight.telemetry.verticalRateFpm > 0 ? `+${flight.telemetry.verticalRateFpm}` : flight.telemetry.verticalRateFpm} ft/min
+                  </span>
+                )}
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block">GPS Coordinates</span>
-                <span className="text-slate-300 text-[11px] tabular-nums">
-                  {flight.telemetry.lat.toFixed(2)}°, {flight.telemetry.lng.toFixed(2)}°
+                <span className="text-[10px] text-slate-300 block font-sans">Squawk & Mode-S</span>
+                <span className={`text-sm font-bold tabular-nums block ${flight.telemetry.squawk === '7700' ? 'text-rose-400 animate-pulse' : 'text-amber-300'}`}>
+                  SQK {flight.telemetry.squawk || flight.squawkCode || '1200'}
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  Hex: {flight.telemetry.hex || flight.aircraft.registration.slice(-4) || 'MODE-S'}
                 </span>
               </div>
+            </div>
+
+            {/* Signal & Coordinates Row */}
+            <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-300 font-mono flex-wrap gap-2">
+              <div>
+                <span className="text-slate-400 font-sans">GPS: </span>
+                <span className="text-white font-bold">{flight.telemetry.lat.toFixed(4)}°N, {flight.telemetry.lng.toFixed(4)}°E</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-sans">Distance: </span>
+                <span className="text-amber-300 font-bold">{flight.telemetry.distanceRemainingNm} NM from KHI</span>
+              </div>
+              {flight.telemetry.rssi !== undefined && (
+                <div>
+                  <span className="text-slate-400 font-sans">Signal: </span>
+                  <span className="text-emerald-400">{flight.telemetry.rssi} dBFS ({flight.telemetry.messages ?? 0} msgs)</span>
+                </div>
+              )}
             </div>
           </div>
 

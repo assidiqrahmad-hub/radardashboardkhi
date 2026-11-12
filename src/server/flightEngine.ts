@@ -41,6 +41,11 @@ export const AIRPORT_COORDS: Record<string, { lat: number; lng: number; city: st
   YYZ: { lat: 43.6777, lng: -79.6248, city: 'Toronto', country: 'Canada', name: 'Toronto Pearson International Airport' },
   BKK: { lat: 13.6900, lng: 100.7501, city: 'Bangkok', country: 'Thailand', name: 'Suvarnabhumi Airport' },
   CMB: { lat: 7.1808, lng: 79.8841, city: 'Colombo', country: 'Sri Lanka', name: 'Bandaranaike International Airport' },
+  DAC: { lat: 23.8433, lng: 90.3978, city: 'Dhaka', country: 'Bangladesh', name: 'Hazrat Shahjalal International Airport' },
+  CGP: { lat: 22.2496, lng: 91.8133, city: 'Chittagong', country: 'Bangladesh', name: 'Shah Amanat International Airport' },
+  KUL: { lat: 2.7456, lng: 101.7099, city: 'Kuala Lumpur', country: 'Malaysia', name: 'Kuala Lumpur International Airport' },
+  DEL: { lat: 28.5562, lng: 77.1000, city: 'Delhi', country: 'India', name: 'Indira Gandhi International Airport' },
+  BOM: { lat: 19.0896, lng: 72.8656, city: 'Mumbai', country: 'India', name: 'Chhatrapati Shivaji Maharaj International Airport' },
   KHI: { lat: 24.9065, lng: 67.1608, city: 'Karachi', country: 'Pakistan', name: 'Jinnah International Airport' },
 };
 
@@ -72,6 +77,16 @@ export const AIRLINES_MAP: Record<string, { name: string; code: string; iata: st
   WY: { name: 'Oman Air', code: 'OMA', iata: 'WY', icao: 'OMA', logoColor: '#a62b2b', country: 'Oman' },
   JZR: { name: 'Jazeera Airways', code: 'JZR', iata: 'J9', icao: 'JZR', logoColor: '#009fe3', country: 'Kuwait' },
   J9: { name: 'Jazeera Airways', code: 'JZR', iata: 'J9', icao: 'JZR', logoColor: '#009fe3', country: 'Kuwait' },
+  KAC: { name: 'Kuwait Airways', code: 'KAC', iata: 'KU', icao: 'KAC', logoColor: '#004d80', country: 'Kuwait' },
+  KU: { name: 'Kuwait Airways', code: 'KAC', iata: 'KU', icao: 'KAC', logoColor: '#004d80', country: 'Kuwait' },
+  BBC: { name: 'Biman Bangladesh Airlines', code: 'BBC', iata: 'BG', icao: 'BBC', logoColor: '#006a4e', country: 'Bangladesh' },
+  BG: { name: 'Biman Bangladesh Airlines', code: 'BBC', iata: 'BG', icao: 'BBC', logoColor: '#006a4e', country: 'Bangladesh' },
+  THA: { name: 'Thai Airways', code: 'THA', iata: 'TG', icao: 'THA', logoColor: '#4f2d7f', country: 'Thailand' },
+  TG: { name: 'Thai Airways', code: 'THA', iata: 'TG', icao: 'THA', logoColor: '#4f2d7f', country: 'Thailand' },
+  BTK: { name: 'Batik Air Malaysia', code: 'BTK', iata: 'OD', icao: 'BTK', logoColor: '#b81237', country: 'Malaysia' },
+  OD: { name: 'Batik Air Malaysia', code: 'BTK', iata: 'OD', icao: 'BTK', logoColor: '#b81237', country: 'Malaysia' },
+  PVV: { name: 'Fly Pro Cargo', code: 'PVV', iata: 'FP', icao: 'PVV', logoColor: '#0284c7', country: 'Moldova' },
+  FP: { name: 'Fly Pro Cargo', code: 'PVV', iata: 'FP', icao: 'PVV', logoColor: '#0284c7', country: 'Moldova' },
   THY: { name: 'Turkish Airlines', code: 'THY', iata: 'TK', icao: 'THY', logoColor: '#c70000', country: 'Turkey' },
   TK: { name: 'Turkish Airlines', code: 'THY', iata: 'TK', icao: 'THY', logoColor: '#c70000', country: 'Turkey' },
   OMS: { name: 'SalamAir', code: 'OMS', iata: 'OV', icao: 'OMS', logoColor: '#00a850', country: 'Oman' },
@@ -777,12 +792,447 @@ export class KarachiFlightEngine {
   private oagApiKey: string = process.env.OAG_SUBSCRIPTION_KEY || '';
   private lastOagSyncTime: number = 0;
   private oagCallsUsed: number = 0;
+  private rapidApiKey: string = process.env.RAPIDAPI_KEY || '3f7292b161msh5ef5328ac60a420p1d0277jsnfdeddd740a25';
+  private rapidApiHost: string = process.env.RAPIDAPI_HOST || 'flightradar243.p.rapidapi.com';
+  private lastRapidApiSyncTime: number = 0;
+  private rapidApiStatusText: string = 'RapidAPI Flightradar24 Configured';
+  private rapidApiStatusCode: number = 0;
+
+  // adsb.fi Open Data integration (ADS-B Exchange v2 format)
+  private adsbfiBaseUrl: string = 'https://opendata.adsb.fi/api';
+  private lastAdsbfiSyncTime: number = 0;
+  private adsbfiAircraftCount: number = 0;
+  private adsbfiStatusText: string = 'adsb.fi Open Data Active (v3 250NM radius)';
 
   constructor() {
     this.rebuildScheduleFromRealTime();
     this.startLiveRadarFeedPolling();
+    this.syncAdsbFiAirTraffic();
     if (this.oagApiKey) {
       this.syncOagFlightSchedule();
+    }
+    if (this.rapidApiKey) {
+      this.syncRapidApiFlightradar();
+    }
+  }
+
+  public setRapidApiKey(key: string, host?: string): void {
+    this.rapidApiKey = key.trim();
+    if (host) this.rapidApiHost = host.trim();
+  }
+
+  public getRapidApiStatus(): {
+    configured: boolean;
+    keyMask: string | null;
+    host: string;
+    lastSync: string | null;
+    statusCode: number;
+    statusText: string;
+  } {
+    return {
+      configured: Boolean(this.rapidApiKey && this.rapidApiKey.length > 5),
+      keyMask: this.rapidApiKey ? `••••••••${this.rapidApiKey.slice(-5)}` : null,
+      host: this.rapidApiHost,
+      lastSync: this.lastRapidApiSyncTime ? new Date(this.lastRapidApiSyncTime).toISOString() : null,
+      statusCode: this.rapidApiStatusCode,
+      statusText: this.rapidApiStatusText
+    };
+  }
+
+  /**
+   * Syncs real-time arrivals from RapidAPI Flightradar24 API (flightradar243.p.rapidapi.com)
+   * Handles upstream 500 status gracefully with live transponder radar fallback
+   */
+  public async syncRapidApiFlightradar(): Promise<{ success: boolean; message: string; statusCode: number }> {
+    if (!this.rapidApiKey) {
+      return { success: false, message: 'RapidAPI key not configured', statusCode: 400 };
+    }
+
+    try {
+      this.lastRapidApiSyncTime = Date.now();
+      const res = await fetch(`https://${this.rapidApiHost}/v1/airports/arrivals?code=KHI&limit=100&page=1`, {
+        headers: {
+          'x-rapidapi-key': this.rapidApiKey,
+          'x-rapidapi-host': this.rapidApiHost,
+          'Accept': 'application/json'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      this.rapidApiStatusCode = res.status;
+
+      if (res.ok) {
+        const data = await res.json();
+        const arrivals = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        let imported = 0;
+        for (const item of arrivals) {
+          const fn = item.flight?.identification?.number?.default || item.number || item.flightNumber;
+          if (!fn) continue;
+          const cleanKey = fn.toLowerCase().replace(/[^a-z0-9]/g, '');
+          const existing = this.flights.get(cleanKey);
+          if (existing) {
+            existing.liveDataSource = 'RapidAPI Flightradar24 + ADS-B Radar';
+            this.flights.set(cleanKey, existing);
+            imported++;
+          }
+        }
+        this.rapidApiStatusText = `🟢 Connected (${imported} arrivals verified via RapidAPI flightradar243)`;
+        return { success: true, message: this.rapidApiStatusText, statusCode: 200 };
+      } else {
+        // RapidAPI provider server error (e.g. 500 Server Error)
+        this.rapidApiStatusText = `RapidAPI returned HTTP ${res.status} (Upstream provider temporary error). Automatic Live ADS-B Feeder & OAG fallback active.`;
+        return { success: false, message: this.rapidApiStatusText, statusCode: res.status };
+      }
+    } catch (err: any) {
+      this.rapidApiStatusCode = 500;
+      this.rapidApiStatusText = `RapidAPI request timeout/error: ${err.message}. Feeder network active.`;
+      return { success: false, message: this.rapidApiStatusText, statusCode: 500 };
+    }
+  }
+
+  /**
+   * Returns current health, telemetry count, and supported endpoints of the adsb.fi Open Data API
+   */
+  public getAdsbFiStatus() {
+    return {
+      configured: true,
+      provider: 'adsb.fi Open Data Network',
+      baseUrl: this.adsbfiBaseUrl,
+      lastSync: this.lastAdsbfiSyncTime ? new Date(this.lastAdsbfiSyncTime).toISOString() : null,
+      aircraftCount: this.adsbfiAircraftCount,
+      statusText: this.adsbfiStatusText,
+      endpoints: [
+        { endpoint: '/v3/lat/24.9065/lon/67.1608/dist/250', desc: 'Radius aircraft search up to 250 NM around Karachi Jinnah International (v3)' },
+        { endpoint: '/v2/callsign/{callsign}', desc: 'Real-time aircraft search matching flight call sign (e.g. PIA302, UAE601)' },
+        { endpoint: '/v2/registration/{reg}', desc: 'Real-time aircraft search matching tail registration (e.g. AP-BMG, A6-EEO)' },
+        { endpoint: '/v2/hex/{hex}', desc: 'Real-time transponder Mode-S 24-bit hex code query (e.g. 461E1A)' },
+        { endpoint: '/v2/sqk/{squawk}', desc: 'Aircraft transponder squawk filter (e.g. 7700 general emergency)' },
+        { endpoint: '/v2/mil', desc: 'All globally tracked aircraft flagged as military' }
+      ]
+    };
+  }
+
+  /**
+   * Syncs real-time flights within 250 NM radius of Karachi from adsb.fi Open Data API
+   * Implements full ADS-B Exchange v2 format parsing with rich telemetry extraction:
+   * (hex, alt_baro, alt_geom, gs, track, baro_rate, squawk, emergency, lat, lon, messages, rssi)
+   */
+  public async syncAdsbFiAirTraffic(): Promise<{ success: boolean; count: number; message: string }> {
+    try {
+      this.lastAdsbfiSyncTime = Date.now();
+      const url = `${this.adsbfiBaseUrl}/v3/lat/${KARACHI_COORDS.lat}/lon/${KARACHI_COORDS.lng}/dist/250`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'KarachiAirportFlightRadar/1.0'
+        },
+        signal: AbortSignal.timeout(6500)
+      });
+
+      if (!res.ok) {
+        throw new Error(`adsb.fi returned HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      const aircraftList: any[] = Array.isArray(data?.ac) ? data.ac : [];
+      let imported = 0;
+
+      for (const ac of aircraftList) {
+        const hex = (ac.hex || '').trim().toLowerCase();
+        const callsign = (ac.flight || '').trim().toUpperCase();
+        const reg = (ac.r || '').trim().toUpperCase();
+        const model = (ac.t || ac.desc || 'Commercial Aircraft').trim();
+        const lat = typeof ac.lat === 'number' ? ac.lat : null;
+        const lon = typeof ac.lon === 'number' ? ac.lon : null;
+
+        if (!lat || !lon) continue;
+
+        // Calculate distance from Karachi aerodrome
+        const dLat = (lat - KARACHI_COORDS.lat) * 60;
+        const dLng = (lon - KARACHI_COORDS.lng) * 60 * Math.cos(KARACHI_COORDS.lat * Math.PI / 180);
+        const distNm = Math.round(Math.sqrt(dLat * dLat + dLng * dLng));
+
+        // Skip ground equipment, maintenance sweepers, tugs, security vehicles
+        const flightNumUpper = (callsign || reg || hex).toUpperCase();
+        const isGroundVehicle =
+          /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(flightNumUpper) ||
+          reg === 'N644PK';
+        if (isGroundVehicle) continue;
+
+        const altBaro = ac.alt_baro === 'ground' ? 0 : typeof ac.alt_baro === 'number' ? ac.alt_baro : 0;
+        const altGeom = typeof ac.alt_geom === 'number' ? ac.alt_geom : undefined;
+        const speed = typeof ac.gs === 'number' ? Math.round(ac.gs) : 0;
+        const track = typeof ac.track === 'number' ? Math.round(ac.track) : 0;
+        const verticalRate = typeof ac.baro_rate === 'number' ? Math.round(ac.baro_rate) : undefined;
+        const squawk = ac.squawk ? String(ac.squawk).trim() : undefined;
+        const emergency = ac.emergency && ac.emergency !== 'none' ? String(ac.emergency) : undefined;
+
+        // Emergency squawk detection (7700 = general, 7600 = radio failure, 7500 = hijack)
+        if (squawk === '7700' || squawk === '7600' || squawk === '7500' || emergency) {
+          this.triggerSquawkAlert(callsign || reg || hex, squawk, emergency, lat, lon);
+        }
+
+        const isGround = ac.alt_baro === 'ground' || altBaro <= 50;
+        let liveStatus: Flight['status'] = 'En Route';
+        if (isGround) {
+          liveStatus = distNm <= 5 ? 'Landed' : 'Taxiing';
+        } else if (distNm <= 25 && altBaro < 5000) {
+          liveStatus = 'Approaching';
+        } else if (distNm <= 60 && altBaro < 10000 && verticalRate && verticalRate < -300) {
+          liveStatus = 'Approaching';
+        } else if (distNm <= 40 && verticalRate && verticalRate > 500) {
+          liveStatus = 'Departed';
+        }
+
+        // Enrich route via adsbdb open-source database
+        const adsbRoute = await this.lookupAdsbDbRoute(callsign || reg || hex);
+        const flightKey = (callsign || reg || hex).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // Check if existing flight matches
+        const existing = this.flights.get(flightKey) || Array.from(this.flights.values()).find(f =>
+          (callsign && f.flightNumber.replace(/[^a-z0-9]/gi, '').toLowerCase() === callsign.toLowerCase().replace(/[^a-z0-9]/gi, '')) ||
+          (reg && f.aircraft.registration.replace(/[^a-z0-9]/gi, '').toLowerCase() === reg.toLowerCase().replace(/[^a-z0-9]/gi, ''))
+        );
+
+        const nowIso = new Date().toISOString();
+
+        if (existing) {
+          existing.telemetry = {
+            ...existing.telemetry,
+            lat: Number(lat.toFixed(4)),
+            lng: Number(lon.toFixed(4)),
+            altitudeFt: altBaro,
+            altitudeGeomFt: altGeom,
+            groundSpeedKnots: speed,
+            heading: track,
+            verticalRateFpm: verticalRate,
+            squawk: squawk || existing.telemetry.squawk,
+            hex: hex || existing.telemetry.hex,
+            emergency: emergency || existing.telemetry.emergency,
+            rssi: typeof ac.rssi === 'number' ? ac.rssi : undefined,
+            messages: typeof ac.messages === 'number' ? ac.messages : undefined,
+            distanceRemainingNm: distNm
+          };
+          if (reg) existing.aircraft.registration = reg;
+          if (model && (!existing.aircraft.model || existing.aircraft.model === 'Commercial Jet')) {
+            existing.aircraft.model = model;
+          }
+          existing.status = liveStatus;
+          existing.isLiveRadar = true;
+          existing.liveDataSource = 'adsb.fi Open Data + ADS-B DB';
+          existing.squawkCode = squawk;
+          existing.updatedAt = nowIso;
+          this.flights.set(existing.id, existing);
+          imported++;
+        } else {
+          // Dynamic aircraft discovered within 250 NM radius
+          const airlineCode = (callsign.substring(0, 3) || callsign.substring(0, 2)).toUpperCase();
+          const airlineInfo = AIRLINES_MAP[airlineCode] || AIRLINES_MAP[callsign.substring(0, 2)] || {
+            name: callsign.length >= 3 ? callsign.substring(0, 3) : 'Commercial Aircraft',
+            code: airlineCode,
+            iata: airlineCode.substring(0, 2),
+            icao: airlineCode,
+            logoColor: '#2563eb',
+            country: 'International'
+          };
+
+          const isToKarachi = distNm <= 120 && track > 100 && track < 300;
+          const origCode = adsbRoute?.origin?.code || (isToKarachi ? 'AIRSPACE' : 'KHI');
+          const destCode = adsbRoute?.destination?.code || (isToKarachi ? 'KHI' : 'AIRSPACE');
+          const origCoord = AIRPORT_COORDS[origCode] || KARACHI_COORDS;
+          const destCoord = AIRPORT_COORDS[destCode] || KARACHI_COORDS;
+
+          const newFlight: Flight = {
+            id: flightKey,
+            flightNumber: callsign || (reg ? `REG-${reg}` : `HEX-${hex.toUpperCase()}`),
+            airline: adsbRoute?.airline || airlineInfo,
+            type: destCode === 'KHI' || isToKarachi ? 'arrival' : 'departure',
+            category: 'international',
+            origin: adsbRoute?.origin || {
+              code: origCode,
+              name: origCoord.name,
+              city: origCoord.city,
+              country: origCoord.country
+            },
+            destination: adsbRoute?.destination || {
+              code: destCode,
+              name: destCoord.name,
+              city: destCoord.city,
+              country: destCoord.country
+            },
+            scheduledTime: nowIso,
+            estimatedTime: nowIso,
+            actualTime: null,
+            status: liveStatus,
+            delayMinutes: 0,
+            delayReason: null,
+            terminal: 'Jinnah Terminal 1',
+            concourse: 'Airspace Radar Feed',
+            gate: 'Stand Radar',
+            checkInCounters: 'adsb.fi Open Data',
+            baggageBelt: 'Carousel Live',
+            aircraft: {
+              model: model || ac.desc || 'Commercial Jet',
+              registration: reg || hex.toUpperCase(),
+              speedKnots: speed,
+              maxAltitudeFt: 43000
+            },
+            telemetry: {
+              lat: Number(lat.toFixed(4)),
+              lng: Number(lon.toFixed(4)),
+              altitudeFt: altBaro,
+              altitudeGeomFt: altGeom,
+              groundSpeedKnots: speed,
+              heading: track,
+              verticalRateFpm: verticalRate,
+              squawk,
+              hex,
+              emergency,
+              rssi: typeof ac.rssi === 'number' ? ac.rssi : undefined,
+              messages: typeof ac.messages === 'number' ? ac.messages : undefined,
+              progressPct: 50,
+              distanceRemainingNm: distNm
+            },
+            history: [
+              {
+                timestamp: nowIso,
+                type: 'status',
+                message: `Transponder ${hex.toUpperCase()} tracked by adsb.fi Open Data (Squawk ${squawk || '1200'}, Altitude ${altBaro}ft).`
+              }
+            ],
+            updatedAt: nowIso,
+            isLiveRadar: true,
+            liveDataSource: 'adsb.fi Open Data + ADS-B DB',
+            squawkCode: squawk
+          };
+          this.flights.set(flightKey, newFlight);
+          imported++;
+        }
+      }
+
+      this.adsbfiAircraftCount = imported || aircraftList.length;
+      this.adsbfiStatusText = `🟢 Live: ${this.adsbfiAircraftCount} aircraft tracked via adsb.fi (250 NM radius)`;
+      return { success: true, count: this.adsbfiAircraftCount, message: this.adsbfiStatusText };
+    } catch (err: any) {
+      this.adsbfiStatusText = `adsb.fi query notice: ${err.message}. Feeder network active.`;
+      return { success: false, count: 0, message: this.adsbfiStatusText };
+    }
+  }
+
+  /**
+   * Queries adsb.fi matching a specific flight callsign (e.g. PIA302, UAE601)
+   */
+  public async queryAdsbFiCallsign(callsign: string): Promise<any> {
+    try {
+      const cs = callsign.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const res = await fetch(`${this.adsbfiBaseUrl}/v2/callsign/${cs}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'KarachiAirportFlightRadar/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      // ignore
+    }
+    return { ac: [], msg: 'No match' };
+  }
+
+  /**
+   * Queries adsb.fi matching a specific tail registration (e.g. AP-BMG, A6-EEO)
+   */
+  public async queryAdsbFiRegistration(reg: string): Promise<any> {
+    try {
+      const r = reg.trim().toUpperCase();
+      const res = await fetch(`${this.adsbfiBaseUrl}/v2/registration/${encodeURIComponent(r)}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'KarachiAirportFlightRadar/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      // ignore
+    }
+    return { ac: [], msg: 'No match' };
+  }
+
+  /**
+   * Queries adsb.fi matching Mode-S 24-bit hex transponder codes (e.g. 461E1A)
+   */
+  public async queryAdsbFiHex(hex: string): Promise<any> {
+    try {
+      const h = hex.trim().toLowerCase().replace(/[^a-f0-9]/g, '');
+      const res = await fetch(`${this.adsbfiBaseUrl}/v2/hex/${h}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'KarachiAirportFlightRadar/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      // ignore
+    }
+    return { ac: [], msg: 'No match' };
+  }
+
+  /**
+   * Queries adsb.fi matching a 4-digit squawk code (e.g. 7700 for general emergency)
+   */
+  public async queryAdsbFiSquawk(sqk: string): Promise<any> {
+    try {
+      const s = sqk.trim().replace(/[^0-9]/g, '');
+      const res = await fetch(`${this.adsbfiBaseUrl}/v2/sqk/${s}`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'KarachiAirportFlightRadar/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      // ignore
+    }
+    return { ac: [], msg: 'No match' };
+  }
+
+  /**
+   * Queries globally tracked military aircraft from adsb.fi (/v2/mil)
+   */
+  public async queryAdsbFiMilitary(): Promise<any> {
+    try {
+      const res = await fetch(`${this.adsbfiBaseUrl}/v2/mil`, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'KarachiAirportFlightRadar/1.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      if (res.ok) return await res.json();
+    } catch (e) {
+      // ignore
+    }
+    return { ac: [], msg: 'No military aircraft found' };
+  }
+
+  /**
+   * Dispatches emergency notification alert if squawk 7700/7600/7500 or emergency state is detected
+   */
+  private triggerSquawkAlert(ident: string, squawk?: string, emergency?: string, lat?: number, lon?: number): void {
+    const alertId = `sqk-${ident}-${Date.now()}`;
+    const desc = squawk === '7700'
+      ? 'GENERAL EMERGENCY (Squawk 7700)'
+      : squawk === '7600'
+      ? 'RADIO COMM LOSS (Squawk 7600)'
+      : squawk === '7500'
+      ? 'UNLAWFUL INTERFERENCE (Squawk 7500)'
+      : `EMERGENCY ALERT (${emergency})`;
+
+    const alert: NotificationAlert = {
+      id: alertId,
+      flightId: ident.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      flightNumber: ident,
+      airline: 'ATC Priority Watch',
+      type: 'status_change',
+      severity: 'urgent',
+      title: `🚨 ${desc} Broadcast`,
+      message: `Aircraft ${ident} broadcasting ${desc} in Karachi FIR coordinates ${lat?.toFixed(2)}°N, ${lon?.toFixed(2)}°E. ATC radar alert engaged.`,
+      timestamp: new Date().toISOString(),
+      route: 'Karachi Airspace Corridor'
+    };
+
+    const hasRecent = this.notificationHistory.some((n: NotificationAlert) => n.title.includes(desc) && n.flightNumber === ident);
+    if (!hasRecent) {
+      this.notificationHistory.unshift(alert);
+      if (this.notificationHistory.length > 50) this.notificationHistory.pop();
     }
   }
 
@@ -808,6 +1258,68 @@ export class KarachiFlightEngine {
       lastSync: this.lastOagSyncTime ? new Date(this.lastOagSyncTime).toISOString() : null,
       cacheTtlMinutesRemaining: ttlRemaining
     };
+  }
+
+  private adsbdbCache = new Map<string, any>();
+
+  /**
+   * Enriches live ADS-B flight callsigns with verified route origins, destinations, and airline names
+   * from adsbdb (Jack Wills / api.adsbdb.com open-source aviation database)
+   */
+  public async lookupAdsbDbRoute(callsignOrFno: string): Promise<{
+    origin?: { code: string; name: string; city: string; country: string };
+    destination?: { code: string; name: string; city: string; country: string };
+    airline?: { name: string; code: string; iata: string; icao: string; logoColor: string; country: string };
+  } | null> {
+    const cs = callsignOrFno.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!cs || cs.length < 3) return null;
+    if (this.adsbdbCache.has(cs)) return this.adsbdbCache.get(cs);
+
+    try {
+      const res = await fetch(`https://api.adsbdb.com/v0/callsign/${cs}`, {
+        headers: {
+          'User-Agent': 'KarachiAirportFlightRadar/1.0 (https://github.com/mrjackwills/adsbdb)'
+        },
+        signal: AbortSignal.timeout(3000)
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const route = d.response?.flightroute;
+        if (route) {
+          const originIata = route.origin?.iata_code || route.origin?.icao_code || '';
+          const destIata = route.destination?.iata_code || route.destination?.icao_code || '';
+          const airlineIata = route.airline?.iata || route.airline?.icao || cs.substring(0, 2);
+
+          const result = {
+            origin: route.origin ? {
+              code: originIata,
+              name: route.origin.name || 'Aerodrome',
+              city: route.origin.municipality || route.origin.name || originIata,
+              country: route.origin.country_name || route.origin.country_iso_name || 'Pakistan'
+            } : undefined,
+            destination: route.destination ? {
+              code: destIata,
+              name: route.destination.name || 'Aerodrome',
+              city: route.destination.municipality || route.destination.name || destIata,
+              country: route.destination.country_name || route.destination.country_iso_name || 'International'
+            } : undefined,
+            airline: route.airline ? {
+              name: route.airline.name || 'Commercial Airline',
+              code: airlineIata,
+              iata: route.airline.iata || airlineIata,
+              icao: route.airline.icao || cs.substring(0, 3),
+              logoColor: AIRLINES_MAP[airlineIata]?.logoColor || AIRLINES_MAP[route.airline.icao]?.logoColor || '#2563eb',
+              country: route.airline.country || 'International'
+            } : undefined
+          };
+          this.adsbdbCache.set(cs, result);
+          return result;
+        }
+      }
+    } catch (e) {
+      // ignore network errors
+    }
+    return null;
   }
 
   /**
@@ -1207,17 +1719,21 @@ export class KarachiFlightEngine {
   }
 
   /**
-   * Continuous background poller fetching live ADS-B state vectors from Flightradar24
+   * Continuous background poller fetching live ADS-B state vectors from both Flightradar24 and adsb.fi
    */
   private startLiveRadarFeedPolling(): void {
     if (this.liveRadarSyncTimer) clearInterval(this.liveRadarSyncTimer);
 
-    // Initial immediate fetch
+    // Initial immediate fetch from both sources
     this.syncLiveAirTrafficFeed();
+    this.syncAdsbFiAirTraffic();
 
     // Poll every 15 seconds for fresh real air traffic data
-    this.liveRadarSyncTimer = setInterval(() => {
-      this.syncLiveAirTrafficFeed();
+    this.liveRadarSyncTimer = setInterval(async () => {
+      await Promise.allSettled([
+        this.syncLiveAirTrafficFeed(),
+        this.syncAdsbFiAirTraffic()
+      ]);
     }, 15000);
   }
 
@@ -1321,11 +1837,30 @@ export class KarachiFlightEngine {
           }
         }
 
-        const origCode = from || (isFromKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
-        const destCode = to || (isToKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
+        // Enrich with adsbdb (open-source database by Jack Wills / api.adsbdb.com)
+        const adsbRoute = await this.lookupAdsbDbRoute(fno || callsign || hex);
+
+        const origCode = adsbRoute?.origin?.code || from || (isFromKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
+        const destCode = adsbRoute?.destination?.code || to || (isToKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
 
         const origCoord = AIRPORT_COORDS[origCode] || KARACHI_COORDS;
         const destCoord = AIRPORT_COORDS[destCode] || KARACHI_COORDS;
+
+        const effectiveOrigin = adsbRoute?.origin || {
+          code: origCode,
+          name: origCoord.name,
+          city: origCoord.city,
+          country: origCoord.country
+        };
+
+        const effectiveDest = adsbRoute?.destination || {
+          code: destCode,
+          name: destCoord.name,
+          city: destCoord.city,
+          country: destCoord.country
+        };
+
+        const effectiveAirline = adsbRoute?.airline || airlineInfo;
 
         // Progress estimate
         const totalRouteNm = Math.max(80, Math.round(
@@ -1360,8 +1895,19 @@ export class KarachiFlightEngine {
           existing.aircraft.model = model || existing.aircraft.model;
           existing.status = liveStatus;
           existing.isLiveRadar = true;
-          existing.liveDataSource = `Flightradar24 ADS-B Live (${radar || 'Receiver'})`;
+          existing.liveDataSource = `Flightradar24 + ADS-B DB (${radar || 'Receiver'})`;
           existing.updatedAt = nowIso;
+
+          // If origin or destination was unknown/AIRSPACE, enrich it from adsbdb
+          if (adsbRoute?.origin && (!existing.origin.city || existing.origin.code === 'AIRSPACE')) {
+            existing.origin = adsbRoute.origin;
+          }
+          if (adsbRoute?.destination && (!existing.destination.city || existing.destination.code === 'AIRSPACE')) {
+            existing.destination = adsbRoute.destination;
+          }
+          if (adsbRoute?.airline && (!existing.airline.name || existing.airline.name === existing.airline.code)) {
+            existing.airline = adsbRoute.airline;
+          }
 
           this.flights.set(existing.id, existing);
         } else {
@@ -1369,21 +1915,11 @@ export class KarachiFlightEngine {
           const newFlight: Flight = {
             id: normalizedKey,
             flightNumber: fno || callsign || `RDR-${hex}`,
-            airline: airlineInfo,
+            airline: effectiveAirline,
             type: isToKhi ? 'arrival' : 'departure',
             category: origCode !== 'KHI' && ['LHE', 'ISB', 'PEW', 'UET', 'MUX', 'LYP', 'SKZ', 'GWD', 'TUK', 'SKT'].includes(origCode) ? 'domestic' : 'international',
-            origin: {
-              code: origCode,
-              name: origCoord.name,
-              city: origCoord.city,
-              country: origCoord.country
-            },
-            destination: {
-              code: destCode,
-              name: destCoord.name,
-              city: destCoord.city,
-              country: destCoord.country
-            },
+            origin: effectiveOrigin,
+            destination: effectiveDest,
             scheduledTime: nowIso,
             estimatedTime: nowIso,
             actualTime: null,

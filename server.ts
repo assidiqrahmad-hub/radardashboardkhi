@@ -117,9 +117,89 @@ async function startServer() {
     }
   });
 
+  // adsb.fi Open Data status
+  app.get('/api/adsbfi/status', (req, res) => {
+    res.json(flightEngine.getAdsbFiStatus());
+  });
+
+  // adsb.fi manual sync trigger
+  app.post('/api/adsbfi/sync', async (req, res) => {
+    try {
+      const result = await flightEngine.syncAdsbFiAirTraffic();
+      const flights = flightEngine.getFlights();
+      broadcastSSE('flights_tick', flights);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi sync failed', details: err.message });
+    }
+  });
+
+  // adsb.fi callsign query proxy (/v2/callsign/:callsign)
+  app.get('/api/adsbfi/callsign/:callsign', async (req, res) => {
+    try {
+      const data = await flightEngine.queryAdsbFiCallsign(req.params.callsign);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi query failed', details: err.message });
+    }
+  });
+
+  // adsb.fi registration query proxy (/v2/registration/:reg)
+  app.get('/api/adsbfi/registration/:reg', async (req, res) => {
+    try {
+      const data = await flightEngine.queryAdsbFiRegistration(req.params.reg);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi query failed', details: err.message });
+    }
+  });
+
+  // adsb.fi Mode-S hex query proxy (/v2/hex/:hex)
+  app.get('/api/adsbfi/hex/:hex', async (req, res) => {
+    try {
+      const data = await flightEngine.queryAdsbFiHex(req.params.hex);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi query failed', details: err.message });
+    }
+  });
+
+  // adsb.fi squawk query proxy (/v2/sqk/:squawk)
+  app.get('/api/adsbfi/squawk/:squawk', async (req, res) => {
+    try {
+      const data = await flightEngine.queryAdsbFiSquawk(req.params.squawk);
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi query failed', details: err.message });
+    }
+  });
+
+  // adsb.fi military aircraft proxy (/v2/mil)
+  app.get('/api/adsbfi/military', async (req, res) => {
+    try {
+      const data = await flightEngine.queryAdsbFiMilitary();
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'adsb.fi military query failed', details: err.message });
+    }
+  });
+
   // OAG Flight Info status & quota check
   app.get('/api/oag/status', (req, res) => {
     res.json(flightEngine.getOagStatus());
+  });
+
+  // ADS-B DB route lookup proxy (Jack Wills open-source API: api.adsbdb.com)
+  app.get('/api/adsbdb/callsign/:callsign', async (req, res) => {
+    try {
+      const data = await flightEngine.lookupAdsbDbRoute(req.params.callsign);
+      if (!data) {
+        return res.status(404).json({ error: 'Route not found for callsign' });
+      }
+      res.json(data);
+    } catch (err: any) {
+      res.status(500).json({ error: 'ADS-B DB query error', details: err.message });
+    }
   });
 
   // Synchronize official flight schedules via OAG Flight Info API
@@ -149,6 +229,35 @@ async function startServer() {
       success: true,
       message: 'OAG API Subscription Key active. Official airline schedule synchronization initialized.',
       status: flightEngine.getOagStatus()
+    });
+  });
+
+  // RapidAPI Flightradar24 status check
+  app.get('/api/rapidapi/status', (req, res) => {
+    res.json(flightEngine.getRapidApiStatus());
+  });
+
+  // Trigger RapidAPI arrivals sync
+  app.post('/api/rapidapi/sync', async (req, res) => {
+    try {
+      const result = await flightEngine.syncRapidApiFlightradar();
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'RapidAPI sync failure', details: err.message });
+    }
+  });
+
+  // Configure RapidAPI key
+  app.post('/api/rapidapi/configure', (req, res) => {
+    const { key, host } = req.body;
+    if (!key || typeof key !== 'string' || key.trim().length < 8) {
+      return res.status(400).json({ error: 'Valid RapidAPI key required' });
+    }
+    flightEngine.setRapidApiKey(key, host);
+    res.json({
+      success: true,
+      message: 'RapidAPI credentials configured.',
+      status: flightEngine.getRapidApiStatus()
     });
   });
 

@@ -38,8 +38,15 @@ export interface FlightTelemetry {
   lat: number;
   lng: number;
   altitudeFt: number;
+  altitudeGeomFt?: number;
   groundSpeedKnots: number;
   heading: number;
+  verticalRateFpm?: number;
+  squawk?: string;
+  hex?: string;
+  emergency?: string;
+  rssi?: number;
+  messages?: number;
   progressPct: number;
   distanceRemainingNm: number;
   waypoints?: Array<{ lat: number; lng: number; name: string }>;
@@ -84,6 +91,8 @@ export interface Flight {
   updatedAt: string;
   isLiveRadar?: boolean;
   liveDataSource?: string;
+  isMilitary?: boolean;
+  squawkCode?: string;
 }
 
 export interface NotificationAlert {

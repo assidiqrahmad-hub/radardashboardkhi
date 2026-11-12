@@ -13,6 +13,7 @@ import { NotificationAlertsCenter } from './components/NotificationAlertsCenter'
 import { WatchlistView } from './components/WatchlistView';
 import { FlightDetailModal } from './components/FlightDetailModal';
 import { WeatherWidget } from './components/WeatherWidget';
+import { ApiIntegrationsModal } from './components/ApiIntegrationsModal';
 import {
   Flight,
   NotificationAlert,
@@ -45,6 +46,10 @@ export default function App() {
   const [activeToast, setActiveToast] = useState<NotificationAlert | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [isApisModalOpen, setIsApisModalOpen] = useState<boolean>(false);
+  const [rapidApiStatus, setRapidApiStatus] = useState<any>(null);
+  const [oagStatus, setOagStatus] = useState<any>(null);
+  const [adsbFiStatus, setAdsbFiStatus] = useState<any>(null);
 
   const [filters, setFilters] = useState<FlightFilterState>({
     type: 'departure',
@@ -106,11 +111,27 @@ export default function App() {
   // Fetch flight data
   const fetchData = useCallback(async () => {
     try {
-      let [flightsRes, statsRes, notifsRes] = await Promise.all([
+      let [flightsRes, statsRes, notifsRes, rapidStatusRes, oagStatusRes, adsbFiStatusRes] = await Promise.all([
         fetch('/api/flights?window=all').catch(() => null),
         fetch('/api/airport/stats').catch(() => null),
         fetch('/api/notifications').catch(() => null),
+        fetch('/api/rapidapi/status').catch(() => null),
+        fetch('/api/oag/status').catch(() => null),
+        fetch('/api/adsbfi/status').catch(() => null),
       ]);
+
+      if (rapidStatusRes && rapidStatusRes.ok) {
+        const rapidData = await rapidStatusRes.json().catch(() => null);
+        if (rapidData) setRapidApiStatus(rapidData);
+      }
+      if (oagStatusRes && oagStatusRes.ok) {
+        const oagData = await oagStatusRes.json().catch(() => null);
+        if (oagData) setOagStatus(oagData);
+      }
+      if (adsbFiStatusRes && adsbFiStatusRes.ok) {
+        const adsbFiData = await adsbFiStatusRes.json().catch(() => null);
+        if (adsbFiData) setAdsbFiStatus(adsbFiData);
+      }
 
       if (!flightsRes || !flightsRes.ok) {
         flightsRes = await fetch('api.php?action=flights').catch(() => null);
@@ -294,7 +315,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-amber-500/20 selection:text-amber-300">
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200">
       
       {/* Offline Banner */}
       {!isOnline && (
@@ -318,6 +339,7 @@ export default function App() {
         unreadAlertsCount={notifications.slice(0, 5).length}
         weatherRisk={weather?.metar.delayRisk.level}
         weatherFlightCat={weather?.metar.flightCategory}
+        onOpenApisModal={() => setIsApisModalOpen(true)}
       />
 
       {/* Main Page Container */}
@@ -349,6 +371,7 @@ export default function App() {
             stats={stats}
             onRefreshFeed={handleSyncFeed}
             isSyncingFeed={isSyncingFeed}
+            onOpenApisModal={() => setIsApisModalOpen(true)}
           />
         )}
 
@@ -407,24 +430,34 @@ export default function App() {
         onViewWeather={() => setActiveTab('weather')}
       />
 
+      {/* Connected APIs & Feeds Modal */}
+      <ApiIntegrationsModal
+        isOpen={isApisModalOpen}
+        onClose={() => setIsApisModalOpen(false)}
+        onRefreshAll={handleSyncFeed}
+        rapidApiStatus={rapidApiStatus}
+        oagStatus={oagStatus}
+        adsbFiStatus={adsbFiStatus}
+      />
+
       {/* Live In-App Notification Toast */}
       {activeToast && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-slate-900 border border-amber-500/50 shadow-2xl rounded-xl p-4 animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-slate-800 border border-amber-500/50 shadow-2xl rounded-xl p-4 animate-in slide-in-from-bottom duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-2.5">
-              <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 mt-0.5">
+              <div className="p-1.5 rounded-lg bg-amber-500/15 text-amber-400 mt-0.5">
                 <Bell className="w-4 h-4 animate-bounce" />
               </div>
               <div>
                 <p className="text-xs font-bold text-white tracking-tight">{activeToast.title}</p>
-                <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">{activeToast.message}</p>
+                <p className="text-xs text-slate-200 mt-0.5 leading-snug">{activeToast.message}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <button
                     onClick={() => {
                       handleSelectFlightById(activeToast.flightId);
                       setActiveToast(null);
                     }}
-                    className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 uppercase tracking-wider"
+                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 uppercase tracking-wider"
                   >
                     View Radar Track →
                   </button>
@@ -433,7 +466,7 @@ export default function App() {
             </div>
             <button
               onClick={() => setActiveToast(null)}
-              className="text-slate-500 hover:text-white"
+              className="text-slate-400 hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -442,14 +475,14 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-900 bg-slate-950/80 py-6 text-xs text-slate-400">
+      <footer className="mt-auto border-t border-slate-800 bg-slate-900 py-6 text-xs text-slate-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-300">Karachi Jinnah International Airport (KHI / OPKC)</span>
+            <span className="font-bold text-slate-200">Karachi Jinnah International Airport (KHI / OPKC)</span>
             <span>·</span>
-            <span>Civil Aviation Aerodrome Telemetry</span>
+            <span className="text-slate-300">Civil Aviation Aerodrome Telemetry</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-4 text-xs text-slate-300">
             <span>Primary Runways 25L/07R & 25R/07L</span>
             <span>·</span>
             <span>Pakistan Standard Time (PKT UTC+5)</span>
