@@ -93,6 +93,7 @@ export interface Flight {
   liveDataSource?: string;
   isMilitary?: boolean;
   squawkCode?: string;
+  isOverflight?: boolean;
 }
 
 export interface NotificationAlert {

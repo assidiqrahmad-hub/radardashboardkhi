@@ -27,6 +27,7 @@ interface FlightDetailModalProps {
   onSimulateEvent: (flightId: string, eventType: 'gate_change' | 'delay' | 'boarding' | 'landed') => void;
   weather?: OpkcWeatherResponse | null;
   onViewWeather?: () => void;
+  onOpenRadar?: (flight: Flight) => void;
 }
 
 export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({
@@ -36,7 +37,8 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({
   onToggleWatchlist,
   onSimulateEvent,
   weather,
-  onViewWeather
+  onViewWeather,
+  onOpenRadar
 }) => {
   if (!flight) return null;
 
@@ -83,12 +85,24 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                {flight.airline.name} · Aircraft: {flight.aircraft.model} ({flight.aircraft.registration})
+                {flight.airline.name} · Aircraft: {flight.aircraft.model}
+                {flight.aircraft.registration ? ` (${flight.aircraft.registration})` : ''}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Open Live Radar Map */}
+            {onOpenRadar && (
+              <button
+                onClick={() => onOpenRadar(flight)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition-colors cursor-pointer"
+              >
+                <Navigation className="w-3.5 h-3.5" />
+                <span>Live Radar Map</span>
+              </button>
+            )}
+
             {/* Watchlist toggle button */}
             <button
               onClick={() => onToggleWatchlist(flight.id)}
@@ -297,10 +311,10 @@ export const FlightDetailModal: React.FC<FlightDetailModalProps> = ({
               <div>
                 <span className="text-[10px] text-slate-300 block font-sans">Squawk & Mode-S</span>
                 <span className={`text-sm font-bold tabular-nums block ${flight.telemetry.squawk === '7700' ? 'text-rose-400 animate-pulse' : 'text-amber-300'}`}>
-                  SQK {flight.telemetry.squawk || flight.squawkCode || '1200'}
+                  {flight.isLiveRadar ? `SQK ${flight.telemetry.squawk || flight.squawkCode || '----'}` : 'SCHED'}
                 </span>
                 <span className="text-[10px] text-slate-400 block">
-                  Hex: {flight.telemetry.hex || flight.aircraft.registration.slice(-4) || 'MODE-S'}
+                  Hex: {flight.telemetry.hex || (flight.aircraft.registration ? flight.aircraft.registration.slice(-4) : 'SCHED')}
                 </span>
               </div>
             </div>

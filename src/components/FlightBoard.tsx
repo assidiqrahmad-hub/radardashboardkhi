@@ -23,6 +23,7 @@ interface FlightBoardProps {
   watchlist: string[];
   onToggleWatchlist: (flightId: string) => void;
   onSelectFlight: (flight: Flight) => void;
+  onOpenRadar?: (flight: Flight) => void;
   onTriggerTestAlert?: (flightId: string, eventType: 'gate_change' | 'delay' | 'boarding' | 'landed') => void;
   stats?: any;
   onRefreshFeed?: () => void;
@@ -36,6 +37,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
   setFilters,
   watchlist,
   onSelectFlight,
+  onOpenRadar,
   onToggleWatchlist,
   onTriggerTestAlert,
   stats,
@@ -47,7 +49,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
     (filters.status as any) || 'all'
   );
 
-  // 0. Base valid flights: exclude airport ground vehicles (e.g. SCOP27), sweepers, tugs, test transponders
+  // 0. Base valid KHI flights: exclude ground vehicles and non-Karachi overflights
   const cleanFlights = useMemo(() => {
     return flights.filter(flight => {
       const isGroundVehicle =
@@ -55,7 +57,13 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
         /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(flight.airline.code) ||
         flight.aircraft.registration === 'N644PK' ||
         (flight.origin.code === 'KHI' && flight.destination.code === 'KHI' && flight.telemetry && flight.telemetry.altitudeFt < 1000 && flight.telemetry.groundSpeedKnots < 130);
-      return !isGroundVehicle;
+      const isNonKhiOverflight =
+        flight.isOverflight ||
+        (flight.origin.code !== 'KHI' &&
+          flight.origin.code !== 'AIRSPACE' &&
+          flight.destination.code !== 'KHI' &&
+          flight.destination.code !== 'AIRSPACE');
+      return !isGroundVehicle && !isNonKhiOverflight;
     });
   }, [flights]);
 
@@ -73,7 +81,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
       if (f.isLiveRadar && f.status !== 'Departed' && f.status !== 'Arrived') return true;
       const schedMs = new Date(f.scheduledTime).getTime();
       const diffHours = (schedMs - nowMs) / (1000 * 60 * 60);
-      if (windowMode === '3h') return diffHours >= -3.25 && diffHours <= 3.25;
+      if (windowMode === '3h') return diffHours >= -3.05 && diffHours <= 3.05;
       if (windowMode === '6h') return diffHours >= -1.0 && diffHours <= 6.25;
       return true;
     }).length;
@@ -88,7 +96,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
       if (f.isLiveRadar && f.status !== 'Departed' && f.status !== 'Arrived') return true;
       const schedMs = new Date(f.scheduledTime).getTime();
       const diffHours = (schedMs - nowMs) / (1000 * 60 * 60);
-      if (windowMode === '3h') return diffHours >= -3.25 && diffHours <= 3.25;
+      if (windowMode === '3h') return diffHours >= -3.05 && diffHours <= 3.05;
       if (windowMode === '6h') return diffHours >= -1.0 && diffHours <= 6.25;
       return true;
     }).length;
@@ -104,8 +112,15 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
         flight.aircraft.registration === 'N644PK' ||
         (flight.origin.code === 'KHI' && flight.destination.code === 'KHI' && flight.telemetry && flight.telemetry.altitudeFt < 1000 && flight.telemetry.groundSpeedKnots < 130);
       if (isGroundVehicle) return false;
+      const isNonKhiOverflight =
+        flight.isOverflight ||
+        (flight.origin.code !== 'KHI' &&
+          flight.origin.code !== 'AIRSPACE' &&
+          flight.destination.code !== 'KHI' &&
+          flight.destination.code !== 'AIRSPACE');
+      if (isNonKhiOverflight) return false;
 
-      // 0b. Operational Time Window filter: Defaults to 'all' so full schedule is visible
+      // 0b. Operational Time Window filter (defaults to ±3h current window)
       const windowMode = filters.window || 'all';
       if (windowMode !== 'all') {
         const nowMs = Date.now();
@@ -115,7 +130,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
         // Active airborne aircraft tracked on radar are always retained for real-time airspace monitoring
         if (!isLiveAirborne) {
           if (windowMode === '3h') {
-            if (diffHours < -3.25 || diffHours > 3.25) return false;
+            if (diffHours < -3.05 || diffHours > 3.05) return false;
           } else if (windowMode === '6h') {
             if (diffHours < -1.0 || diffHours > 6.25) return false;
           }
@@ -305,17 +320,6 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
               <span className="hidden sm:inline">Window:</span>
             </span>
             <button
-              onClick={() => setFilters(prev => ({ ...prev, window: 'all' }))}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                (!filters.window || filters.window === 'all')
-                  ? 'bg-amber-500 text-slate-950 shadow-xs'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-              title="Full 24-hour daily flight schedule"
-            >
-              Full Day ({cleanFlights.length})
-            </button>
-            <button
               onClick={() => setFilters(prev => ({ ...prev, window: '3h' }))}
               className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 filters.window === '3h'
@@ -336,6 +340,17 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
               title="Next 6 hours of flight operations"
             >
               Next 6h
+            </button>
+            <button
+              onClick={() => setFilters(prev => ({ ...prev, window: 'all' }))}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                (!filters.window || filters.window === 'all')
+                  ? 'bg-amber-500 text-slate-950 shadow-xs'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+              title="Full 24-hour daily flight schedule"
+            >
+              Full Day ({cleanFlights.length})
             </button>
           </div>
 
@@ -381,7 +396,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
             type="text"
             value={filters.searchQuery}
             onChange={e => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
-            placeholder="Search flight #, city (Dubai, Islamabad), airline, gate..."
+            placeholder="Search flight #, city (Dubai, Islamabad), airline..."
             className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-hidden focus:border-amber-400 font-medium transition-colors shadow-inner"
           />
           {filters.searchQuery && (
@@ -447,7 +462,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
               : 'text-slate-300 hover:text-teal-300'
           }`}
         >
-          Landed / Baggage
+          Landed / Arrived
         </button>
       </div>
 
@@ -530,13 +545,15 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
                 <tr className="border-b border-slate-700 bg-slate-850 text-xs font-bold text-slate-200 tracking-wider">
                   <th className="py-3 px-3 w-10 text-center">Watch</th>
                   <th className="py-3 px-3">Flight / Carrier</th>
-                  <th className="py-3 px-3">{filters.type === 'departure' ? 'Destination' : 'Origin'}</th>
+                  <th className="py-3 px-3">
+                    {filters.type === 'departure' ? 'Destination' : filters.type === 'arrival' ? 'Origin' : 'Destination / Origin'}
+                  </th>
                   <th className="py-3 px-3">Scheduled</th>
                   <th className="py-3 px-3">Estimated / Actual</th>
-                  <th className="py-3 px-3">Terminal & Gate</th>
-                  <th className="py-3 px-3">{filters.type === 'departure' ? 'Check-in' : 'Baggage'}</th>
+                  {filters.type !== 'departure' && <th className="py-3 px-3">Terminal & Gate</th>}
+                  {filters.type !== 'arrival' && <th className="py-3 px-3">Check-in</th>}
                   <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3 text-right">Details</th>
+                  <th className="py-3 px-3 text-right">Radar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-700/60 text-xs">
@@ -661,17 +678,17 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
                                 {flight.category === 'domestic' ? 'DOM' : 'INT'}
                               </span>
                               {flight.liveDataSource?.toLowerCase().includes('oag') && (
-                                <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono text-[10px] font-bold border border-blue-500/30" title="Verified by OAG Official Airline Schedules">
+                                <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono text-[10px] font-bold border border-blue-500/30" title={flight.liveDataSource}>
                                   OAG
                                 </span>
                               )}
                               {flight.liveDataSource?.toLowerCase().includes('adsb.fi') && (
-                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40" title="Live telemetry tracked via adsb.fi Open Data Network">
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40" title={flight.liveDataSource}>
                                   adsb.fi
                                 </span>
                               )}
-                              {(flight.liveDataSource?.toLowerCase().includes('ads-b db') || flight.liveDataSource?.toLowerCase().includes('flightradar24')) && (
-                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/30" title="Route origin and destination enriched by ADS-B DB (mrjackwills)">
+                              {flight.liveDataSource?.toLowerCase().includes('ads-b db') && (
+                                <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/30" title={flight.liveDataSource}>
                                   ADS-B DB
                                 </span>
                               )}
@@ -688,9 +705,15 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
                               )}
                             </div>
                             <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                              <span className="truncate max-w-[120px] text-slate-200">{flight.airline.name}</span>
-                              <span>·</span>
-                              <span className="font-mono text-slate-300 font-semibold">{flight.aircraft.registration}</span>
+                              <span className="truncate max-w-[140px] text-slate-200">{flight.airline.name}</span>
+                              {(flight.aircraft.registration || flight.aircraft.model) && (
+                                <>
+                                  <span>·</span>
+                                  <span className="font-mono text-slate-300 font-semibold truncate max-w-[120px]">
+                                    {flight.aircraft.registration || flight.aircraft.model}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -726,52 +749,65 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({
                         )}
                       </td>
 
-                      {/* Terminal & Gate */}
-                      <td className="py-3 px-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <span
-                            className={`font-mono font-bold px-2.5 py-1 rounded text-xs ${
-                              flight.previousGate
-                                ? 'bg-amber-500/25 text-amber-200 border border-amber-500/40'
-                                : 'bg-slate-700 text-white border border-slate-600'
-                            }`}
-                          >
-                            {flight.gate}
-                          </span>
-                          {flight.previousGate && (
-                            <span className="text-xs text-amber-300 font-bold" title={`Changed from ${flight.previousGate}`}>
-                              (Changed)
-                            </span>
+                      {/* Terminal & Gate (hidden on Departures board) */}
+                      {filters.type !== 'departure' && (
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          {isDeparture ? (
+                            <span className="text-slate-500 font-mono">—</span>
+                          ) : (
+                            <>
+                              <div className="flex items-center gap-1.5">
+                                <span
+                                  className={`font-mono font-bold px-2.5 py-1 rounded text-xs ${
+                                    flight.previousGate
+                                      ? 'bg-amber-500/25 text-amber-200 border border-amber-500/40'
+                                      : 'bg-slate-700 text-white border border-slate-600'
+                                  }`}
+                                >
+                                  {flight.gate}
+                                </span>
+                                {flight.previousGate && (
+                                  <span className="text-xs text-amber-300 font-bold" title={`Changed from ${flight.previousGate}`}>
+                                    (Changed)
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-slate-300 font-medium mt-0.5">{flight.concourse.split(' ')[0]}</p>
+                            </>
                           )}
-                        </div>
-                        <p className="text-xs text-slate-300 font-medium mt-0.5">{flight.concourse.split(' ')[0]}</p>
-                      </td>
+                        </td>
+                      )}
 
-                      {/* Check-in or Baggage Carousel */}
-                      <td className="py-3 px-3 whitespace-nowrap font-mono text-slate-100 text-xs font-semibold">
-                        {isDeparture ? (
-                          <span className="text-slate-100">{flight.checkInCounters}</span>
-                        ) : (
-                          <span className="text-emerald-300 font-bold bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded text-xs">
-                            {flight.baggageBelt}
-                          </span>
-                        )}
-                      </td>
+                      {/* Check-in (Baggage Carousel removed from Arrivals board) */}
+                      {filters.type !== 'arrival' && (
+                        <td className="py-3 px-3 whitespace-nowrap font-mono text-slate-100 text-xs font-semibold">
+                          {isDeparture ? (
+                            <span className="text-slate-100">{flight.checkInCounters}</span>
+                          ) : (
+                            <span className="text-slate-500">—</span>
+                          )}
+                        </td>
+                      )}
 
                       {/* Status */}
                       <td className="py-3 px-3 whitespace-nowrap">{statusBadge}</td>
 
-                      {/* Open Action */}
+                      {/* Open Flightradar24-style Map Action */}
                       <td className="py-3 px-3 text-right whitespace-nowrap">
                         <button
                           onClick={e => {
                             e.stopPropagation();
-                            onSelectFlight(flight);
+                            if (onOpenRadar) {
+                              onOpenRadar(flight);
+                            } else {
+                              onSelectFlight(flight);
+                            }
                           }}
-                          className="px-3 py-1.5 text-xs font-bold text-white bg-slate-700 hover:bg-slate-600 rounded-lg border border-slate-600 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          title={`Open ${flight.flightNumber} on Live Airspace Radar Map`}
+                          className="px-3 py-1.5 text-xs font-bold text-amber-200 bg-amber-500/15 hover:bg-amber-500 hover:text-slate-950 rounded-lg border border-amber-500/40 transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
                         >
                           <span>Radar</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+                          <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       </td>
                     </tr>

@@ -321,7 +321,7 @@ export const ApiIntegrationsModal: React.FC<ApiIntegrationsModalProps> = ({
               </div>
               <div>
                 <span className="text-slate-400">Free Tier Usage: </span>
-                <span className="text-emerald-400 font-bold">{oagStatus?.callsUsed || 2} / 100 calls</span>
+                <span className="text-emerald-400 font-bold">{oagStatus?.callsUsed ?? 0} / 100 calls</span>
               </div>
             </div>
           </div>

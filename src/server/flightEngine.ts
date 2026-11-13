@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import type { Flight, NotificationAlert, AirportStats, FlightTelemetry } from '../types/flight.ts';
 
 // Karachi Jinnah International Airport coordinates
@@ -29,15 +31,26 @@ export const AIRPORT_COORDS: Record<string, { lat: number; lng: number; city: st
   MED: { lat: 24.5534, lng: 39.7051, city: 'Medina', country: 'Saudi Arabia', name: 'Prince Mohammad Bin Abdulaziz Airport' },
   DMM: { lat: 26.4712, lng: 49.7978, city: 'Dammam', country: 'Saudi Arabia', name: 'King Fahd International Airport' },
   MCT: { lat: 23.5933, lng: 58.2844, city: 'Muscat', country: 'Oman', name: 'Muscat International Airport' },
+  SLL: { lat: 17.0387, lng: 54.0913, city: 'Salalah', country: 'Oman', name: 'Salalah International Airport' },
   BAH: { lat: 26.2708, lng: 50.6336, city: 'Manama', country: 'Bahrain', name: 'Bahrain International Airport' },
   KWI: { lat: 29.2269, lng: 47.9789, city: 'Kuwait City', country: 'Kuwait', name: 'Kuwait International Airport' },
   IST: { lat: 41.2753, lng: 28.7519, city: 'Istanbul', country: 'Turkey', name: 'Istanbul Airport' },
+  SAW: { lat: 40.8986, lng: 29.3092, city: 'Istanbul Sabiha', country: 'Turkey', name: 'Sabiha Gokcen International Airport' },
   ADD: { lat: 8.9779, lng: 38.7993, city: 'Addis Ababa', country: 'Ethiopia', name: 'Bole International Airport' },
+  CAI: { lat: 30.1219, lng: 31.4056, city: 'Cairo', country: 'Egypt', name: 'Cairo International Airport' },
   BGW: { lat: 33.2625, lng: 44.2344, city: 'Baghdad', country: 'Iraq', name: 'Baghdad International Airport' },
+  NJF: { lat: 31.9898, lng: 44.4043, city: 'Najaf', country: 'Iraq', name: 'Al Najaf International Airport' },
+  IKA: { lat: 35.4161, lng: 51.1522, city: 'Tehran', country: 'Iran', name: 'Imam Khomeini International Airport' },
+  MHD: { lat: 36.2352, lng: 59.6410, city: 'Mashhad', country: 'Iran', name: 'Mashhad International Airport' },
+  KBL: { lat: 34.5659, lng: 69.2123, city: 'Kabul', country: 'Afghanistan', name: 'Kabul International Airport' },
   MFM: { lat: 22.1495, lng: 113.5915, city: 'Macau', country: 'Macau SAR', name: 'Macau International Airport' },
   CAN: { lat: 23.3924, lng: 113.2988, city: 'Guangzhou', country: 'China', name: 'Guangzhou Baiyun International Airport' },
+  PEK: { lat: 40.0799, lng: 116.6031, city: 'Beijing', country: 'China', name: 'Beijing Capital International Airport' },
+  PKX: { lat: 39.5098, lng: 116.4105, city: 'Beijing Daxing', country: 'China', name: 'Beijing Daxing International Airport' },
+  URC: { lat: 43.9071, lng: 87.4742, city: 'Urumqi', country: 'China', name: 'Urumqi Diwopu International Airport' },
   HKG: { lat: 22.3080, lng: 113.9185, city: 'Hong Kong', country: 'Hong Kong SAR', name: 'Hong Kong International Airport' },
   LHR: { lat: 51.4700, lng: -0.4543, city: 'London', country: 'United Kingdom', name: 'London Heathrow Airport' },
+  MAN: { lat: 53.3537, lng: -2.2750, city: 'Manchester', country: 'United Kingdom', name: 'Manchester Airport' },
   YYZ: { lat: 43.6777, lng: -79.6248, city: 'Toronto', country: 'Canada', name: 'Toronto Pearson International Airport' },
   BKK: { lat: 13.6900, lng: 100.7501, city: 'Bangkok', country: 'Thailand', name: 'Suvarnabhumi Airport' },
   CMB: { lat: 7.1808, lng: 79.8841, city: 'Colombo', country: 'Sri Lanka', name: 'Bandaranaike International Airport' },
@@ -91,7 +104,30 @@ export const AIRLINES_MAP: Record<string, { name: string; code: string; iata: st
   TK: { name: 'Turkish Airlines', code: 'THY', iata: 'TK', icao: 'THY', logoColor: '#c70000', country: 'Turkey' },
   OMS: { name: 'SalamAir', code: 'OMS', iata: 'OV', icao: 'OMS', logoColor: '#00a850', country: 'Oman' },
   OV: { name: 'SalamAir', code: 'OMS', iata: 'OV', icao: 'OMS', logoColor: '#00a850', country: 'Oman' },
-  IAW: { name: 'Iraqi Airways / Fly Baghdad', code: 'IAW', iata: 'IF', icao: 'IAW', logoColor: '#0f4c3a', country: 'Iraq' },
+  ETD: { name: 'Etihad Airways', code: 'ETD', iata: 'EY', icao: 'ETD', logoColor: '#bd8b13', country: 'United Arab Emirates' },
+  EY: { name: 'Etihad Airways', code: 'ETD', iata: 'EY', icao: 'ETD', logoColor: '#bd8b13', country: 'United Arab Emirates' },
+  KNE: { name: 'flynas', code: 'KNE', iata: 'XY', icao: 'KNE', logoColor: '#00b5a3', country: 'Saudi Arabia' },
+  XY: { name: 'flynas', code: 'KNE', iata: 'XY', icao: 'KNE', logoColor: '#00b5a3', country: 'Saudi Arabia' },
+  FAD: { name: 'flyadeal', code: 'FAD', iata: 'F3', icao: 'FAD', logoColor: '#6d28d9', country: 'Saudi Arabia' },
+  F3: { name: 'flyadeal', code: 'FAD', iata: 'F3', icao: 'FAD', logoColor: '#6d28d9', country: 'Saudi Arabia' },
+  ALK: { name: 'SriLankan Airlines', code: 'ALK', iata: 'UL', icao: 'ALK', logoColor: '#003c71', country: 'Sri Lanka' },
+  UL: { name: 'SriLankan Airlines', code: 'ALK', iata: 'UL', icao: 'ALK', logoColor: '#003c71', country: 'Sri Lanka' },
+  CCA: { name: 'Air China', code: 'CCA', iata: 'CA', icao: 'CCA', logoColor: '#c8102e', country: 'China' },
+  CA: { name: 'Air China', code: 'CCA', iata: 'CA', icao: 'CCA', logoColor: '#c8102e', country: 'China' },
+  CSN: { name: 'China Southern Airlines', code: 'CSN', iata: 'CZ', icao: 'CSN', logoColor: '#008fd5', country: 'China' },
+  CZ: { name: 'China Southern Airlines', code: 'CSN', iata: 'CZ', icao: 'CSN', logoColor: '#008fd5', country: 'China' },
+  IRA: { name: 'Iran Air', code: 'IRA', iata: 'IR', icao: 'IRA', logoColor: '#0033a0', country: 'Iran' },
+  IR: { name: 'Iran Air', code: 'IRA', iata: 'IR', icao: 'IRA', logoColor: '#0033a0', country: 'Iran' },
+  IRM: { name: 'Mahan Air', code: 'IRM', iata: 'W5', icao: 'IRM', logoColor: '#1d4ed8', country: 'Iran' },
+  W5: { name: 'Mahan Air', code: 'IRM', iata: 'W5', icao: 'IRM', logoColor: '#1d4ed8', country: 'Iran' },
+  IAW: { name: 'Iraqi Airways', code: 'IAW', iata: 'IA', icao: 'IAW', logoColor: '#0f4c3a', country: 'Iraq' },
+  IA: { name: 'Iraqi Airways', code: 'IAW', iata: 'IA', icao: 'IAW', logoColor: '#0f4c3a', country: 'Iraq' },
+  KMF: { name: 'Kam Air', code: 'KMF', iata: 'RQ', icao: 'KMF', logoColor: '#ea580c', country: 'Afghanistan' },
+  RQ: { name: 'Kam Air', code: 'KMF', iata: 'RQ', icao: 'KMF', logoColor: '#ea580c', country: 'Afghanistan' },
+  AFG: { name: 'Ariana Afghan Airlines', code: 'AFG', iata: 'FG', icao: 'AFG', logoColor: '#0284c7', country: 'Afghanistan' },
+  FG: { name: 'Ariana Afghan Airlines', code: 'AFG', iata: 'FG', icao: 'AFG', logoColor: '#0284c7', country: 'Afghanistan' },
+  MSR: { name: 'EgyptAir', code: 'MSR', iata: 'MS', icao: 'MSR', logoColor: '#1e3a8a', country: 'Egypt' },
+  MS: { name: 'EgyptAir', code: 'MSR', iata: 'MS', icao: 'MSR', logoColor: '#1e3a8a', country: 'Egypt' },
   BSC: { name: 'Classic Air Cargo', code: 'BSC', iata: 'KW', icao: 'BSC', logoColor: '#374151', country: 'International Cargo' },
 };
 
@@ -713,23 +749,6 @@ const REAL_SCHEDULE_TEMPLATES: ScheduleTemplate[] = [
     aircraftReg: 'A9C-TD'
   },
   {
-    flightNumber: 'WY-323',
-    airlineCode: 'WY',
-    type: 'arrival',
-    category: 'international',
-    otherAirport: 'MCT',
-    hourPkt: 13,
-    minutePkt: 45,
-    durationMinutes: 100,
-    terminal: 'Jinnah Terminal 1',
-    concourse: 'Concourse East (International)',
-    gate: 'Gate 28',
-    checkInCounters: 'Row E (E13-E18)',
-    baggageBelt: 'Carousel 4',
-    aircraftModel: 'Boeing 737 MAX 8',
-    aircraftReg: 'A4O-MP'
-  },
-  {
     flightNumber: 'J9-511',
     airlineCode: 'J9',
     type: 'arrival',
@@ -803,17 +822,66 @@ export class KarachiFlightEngine {
   private lastAdsbfiSyncTime: number = 0;
   private adsbfiAircraftCount: number = 0;
   private adsbfiStatusText: string = 'adsb.fi Open Data Active (v3 250NM radius)';
+  private oagCacheDir: string = path.resolve(process.cwd(), '.cache');
+  private oagCacheFile: string = path.resolve(process.cwd(), '.cache', 'oag-khi-schedule.json');
 
   constructor() {
-    this.rebuildScheduleFromRealTime();
+    const loadedFromCache = this.loadOagCacheForToday();
+    if (!this.oagApiKey && !loadedFromCache) {
+      // Only use static fallback templates if OAG API key is not configured
+      this.rebuildScheduleFromRealTime();
+    }
     this.startLiveRadarFeedPolling();
     this.syncAdsbFiAirTraffic();
-    if (this.oagApiKey) {
+    if (this.oagApiKey && !loadedFromCache) {
       this.syncOagFlightSchedule();
     }
     if (this.rapidApiKey) {
       this.syncRapidApiFlightradar();
     }
+  }
+
+  private getTodayPktDate(): string {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi' }).format(new Date());
+  }
+
+  /**
+   * Matches an ADS-B callsign / flight number / tail registration against flights in memory
+   * Handles IATA vs ICAO carrier codes (e.g. PK-302 === PIA302, EK-601 === UAE601, FZ-336 === FDB336)
+   */
+  private findMatchingFlight(callsign?: string, fno?: string, reg?: string): Flight | undefined {
+    const cleanCall = (callsign || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanFno = (fno || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanReg = (reg || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (cleanFno && this.flights.has(cleanFno)) return this.flights.get(cleanFno);
+    if (cleanCall && this.flights.has(cleanCall)) return this.flights.get(cleanCall);
+
+    const extractCarrierAndDigits = (s: string) => {
+      const m = s.match(/^([a-z0-9]{2,3}?)(\d+[a-z]?)$/i);
+      return m ? { carrier: m[1].toLowerCase(), num: m[2].replace(/^0+/, '') } : null;
+    };
+
+    const targetParts = extractCarrierAndDigits(cleanCall || cleanFno);
+
+    return Array.from(this.flights.values()).find(f => {
+      const fClean = f.flightNumber.replace(/[^a-z0-9]/gi, '').toLowerCase();
+      if ((cleanCall && fClean === cleanCall) || (cleanFno && fClean === cleanFno)) return true;
+      if (cleanReg && f.aircraft.registration && f.aircraft.registration.replace(/[^a-z0-9]/gi, '').toLowerCase() === cleanReg) {
+        return true;
+      }
+      if (targetParts) {
+        const fParts = extractCarrierAndDigits(fClean);
+        if (fParts && fParts.num === targetParts.num) {
+          const iata = (f.airline.iata || '').toLowerCase();
+          const icao = (f.airline.icao || '').toLowerCase();
+          if (targetParts.carrier === iata || targetParts.carrier === icao) {
+            return true;
+          }
+        }
+      }
+      return false;
+    });
   }
 
   public setRapidApiKey(key: string, host?: string): void {
@@ -988,11 +1056,8 @@ export class KarachiFlightEngine {
         const adsbRoute = await this.lookupAdsbDbRoute(callsign || reg || hex);
         const flightKey = (callsign || reg || hex).toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        // Check if existing flight matches
-        const existing = this.flights.get(flightKey) || Array.from(this.flights.values()).find(f =>
-          (callsign && f.flightNumber.replace(/[^a-z0-9]/gi, '').toLowerCase() === callsign.toLowerCase().replace(/[^a-z0-9]/gi, '')) ||
-          (reg && f.aircraft.registration.replace(/[^a-z0-9]/gi, '').toLowerCase() === reg.toLowerCase().replace(/[^a-z0-9]/gi, ''))
-        );
+        // Check if existing flight matches (handling IATA <-> ICAO codes & registration)
+        const existing = this.findMatchingFlight(callsign, callsign, reg);
 
         const nowIso = new Date().toISOString();
 
@@ -1037,10 +1102,15 @@ export class KarachiFlightEngine {
           };
 
           const isToKarachi = distNm <= 120 && track > 100 && track < 300;
-          const origCode = adsbRoute?.origin?.code || (isToKarachi ? 'AIRSPACE' : 'KHI');
+          const origCode = adsbRoute?.origin?.code || (isToKarachi ? 'AIRSPACE' : altBaro > 18000 ? 'AIRSPACE' : 'KHI');
           const destCode = adsbRoute?.destination?.code || (isToKarachi ? 'KHI' : 'AIRSPACE');
           const origCoord = AIRPORT_COORDS[origCode] || KARACHI_COORDS;
           const destCoord = AIRPORT_COORDS[destCode] || KARACHI_COORDS;
+
+          const isOverflight =
+            (origCode !== 'KHI' && origCode !== 'AIRSPACE' && destCode !== 'KHI' && destCode !== 'AIRSPACE') ||
+            (origCode === 'AIRSPACE' && destCode === 'AIRSPACE') ||
+            (altBaro > 18000 && origCode !== 'KHI' && destCode !== 'KHI');
 
           const newFlight: Flight = {
             id: flightKey,
@@ -1067,7 +1137,7 @@ export class KarachiFlightEngine {
             delayMinutes: 0,
             delayReason: null,
             terminal: 'Jinnah Terminal 1',
-            concourse: 'Airspace Radar Feed',
+            concourse: isOverflight ? 'Karachi FIR Transit' : 'Airspace Radar Feed',
             gate: 'Stand Radar',
             checkInCounters: 'adsb.fi Open Data',
             baggageBelt: 'Carousel Live',
@@ -1103,7 +1173,8 @@ export class KarachiFlightEngine {
             updatedAt: nowIso,
             isLiveRadar: true,
             liveDataSource: 'adsb.fi Open Data + ADS-B DB',
-            squawkCode: squawk
+            squawkCode: squawk,
+            isOverflight
           };
           this.flights.set(flightKey, newFlight);
           imported++;
@@ -1323,8 +1394,315 @@ export class KarachiFlightEngine {
   }
 
   /**
-   * Syncs official flight schedules and real-time gate/terminal status from OAG API
-   * Implements strict 1-hour caching to protect the user's 100-call free tier quota!
+   * Loads cached verified OAG schedule for today's PKT date from disk (0 API calls)
+   */
+  private loadOagCacheForToday(): boolean {
+    try {
+      if (!fs.existsSync(this.oagCacheFile)) return false;
+      const raw = fs.readFileSync(this.oagCacheFile, 'utf8');
+      const cached = JSON.parse(raw);
+      const todayPkt = this.getTodayPktDate();
+      if (cached && cached.datePkt === todayPkt && Array.isArray(cached.instances) && cached.instances.length > 0) {
+        this.lastOagSyncTime = cached.fetchedAt || Date.now();
+        this.oagCallsUsed = cached.callsUsed || this.oagCallsUsed;
+        this.ingestOagInstances(cached.instances);
+        const hasBoth = Boolean(cached.depComplete && cached.arrComplete);
+        return hasBoth;
+      }
+    } catch (err) {
+      // Ignore corrupt cache and allow fresh fetch
+    }
+    return false;
+  }
+
+  private readRawOagCache(): any | null {
+    try {
+      if (!fs.existsSync(this.oagCacheFile)) return null;
+      return JSON.parse(fs.readFileSync(this.oagCacheFile, 'utf8'));
+    } catch (err) {
+      return null;
+    }
+  }
+
+  private saveOagCache(
+    datePkt: string,
+    instances: Array<{ item: any; type: 'departure' | 'arrival' }>,
+    depComplete = true,
+    arrComplete = true
+  ): void {
+    try {
+      if (!fs.existsSync(this.oagCacheDir)) {
+        fs.mkdirSync(this.oagCacheDir, { recursive: true });
+      }
+      fs.writeFileSync(
+        this.oagCacheFile,
+        JSON.stringify({
+          datePkt,
+          fetchedAt: Date.now(),
+          callsUsed: this.oagCallsUsed,
+          depComplete,
+          arrComplete,
+          instances
+        }),
+        'utf8'
+      );
+    } catch (err) {
+      // Ignore disk write failure on read-only FS
+    }
+  }
+
+  /**
+   * Computes current time-based FIDS operational status for a verified OAG flight
+   */
+  private computeOagFlightStatus(
+    schedUtcIso: string,
+    type: 'departure' | 'arrival',
+    elapsedMinutes: number
+  ): { status: Flight['status']; actualTime: string | null; progressPct: number } {
+    const nowMs = Date.now();
+    const schedMs = new Date(schedUtcIso).getTime();
+    const diffMinutes = (schedMs - nowMs) / 60000;
+    const duration = Math.max(45, elapsedMinutes || 120);
+
+    if (type === 'departure') {
+      if (diffMinutes < -45) {
+        return { status: 'Departed', actualTime: schedUtcIso, progressPct: 100 };
+      } else if (diffMinutes >= -45 && diffMinutes < -10) {
+        return {
+          status: 'En Route',
+          actualTime: schedUtcIso,
+          progressPct: Math.min(95, Math.max(15, Math.round((Math.abs(diffMinutes) / duration) * 100)))
+        };
+      } else if (diffMinutes >= -10 && diffMinutes <= 0) {
+        return { status: 'Taxiing', actualTime: null, progressPct: 5 };
+      } else if (diffMinutes > 0 && diffMinutes <= 25) {
+        return { status: 'Final Call', actualTime: null, progressPct: 0 };
+      } else if (diffMinutes > 25 && diffMinutes <= 55) {
+        return { status: 'Boarding', actualTime: null, progressPct: 0 };
+      } else if (diffMinutes > 55 && diffMinutes <= 120) {
+        return { status: 'Check-in Open', actualTime: null, progressPct: 0 };
+      }
+      return { status: 'Scheduled', actualTime: null, progressPct: 0 };
+    } else {
+      if (diffMinutes < -35) {
+        return { status: 'Arrived', actualTime: schedUtcIso, progressPct: 100 };
+      } else if (diffMinutes >= -35 && diffMinutes < 0) {
+        return { status: 'Landed', actualTime: schedUtcIso, progressPct: 100 };
+      } else if (diffMinutes >= 0 && diffMinutes <= 15) {
+        return { status: 'Approaching', actualTime: null, progressPct: 95 };
+      } else if (diffMinutes > 15 && diffMinutes <= 90) {
+        return {
+          status: 'En Route',
+          actualTime: null,
+          progressPct: Math.max(15, Math.min(90, Math.round(100 - (diffMinutes / duration) * 100)))
+        };
+      }
+      return { status: 'Scheduled', actualTime: null, progressPct: 0 };
+    }
+  }
+
+  /**
+   * Ingests verified OAG instances into this.flights and removes any unverified static fallback rows
+   */
+  private ingestOagInstances(allInstances: Array<{ item: any; type: 'departure' | 'arrival' }>): number {
+    // Purge any stale unverified static template rows so only verified OAG & live ADS-B flights remain
+    for (const [id, flight] of this.flights.entries()) {
+      if (
+        flight.liveDataSource === 'KHI Aerodrome Operational FIDS' ||
+        flight.liveDataSource?.includes('Offline')
+      ) {
+        this.flights.delete(id);
+      }
+    }
+
+    const OAG_AIRCRAFT_MAP: Record<string, string> = {
+      '7M8': 'Boeing 737 MAX 8',
+      '7M9': 'Boeing 737 MAX 9',
+      'B38M': 'Boeing 737 MAX 8',
+      'B39M': 'Boeing 737 MAX 9',
+      '738': 'Boeing 737-800',
+      'B738': 'Boeing 737-800',
+      '73H': 'Boeing 737-800 (Winglets)',
+      '77W': 'Boeing 777-300ER',
+      'B77W': 'Boeing 777-300ER',
+      '772': 'Boeing 777-200ER',
+      '77L': 'Boeing 777-200LR',
+      '788': 'Boeing 787-8 Dreamliner',
+      'B788': 'Boeing 787-8 Dreamliner',
+      '789': 'Boeing 787-9 Dreamliner',
+      'B789': 'Boeing 787-9 Dreamliner',
+      '78X': 'Boeing 787-10 Dreamliner',
+      '320': 'Airbus A320-200',
+      'A320': 'Airbus A320-200',
+      '32A': 'Airbus A320-200 (Sharklets)',
+      '32N': 'Airbus A320neo',
+      'A20N': 'Airbus A320neo',
+      '321': 'Airbus A321-200',
+      'A321': 'Airbus A321-200',
+      '32Q': 'Airbus A321neo',
+      'A21N': 'Airbus A321neo',
+      '332': 'Airbus A330-200',
+      '333': 'Airbus A330-300',
+      'A333': 'Airbus A330-300',
+      '359': 'Airbus A350-900',
+      'AT7': 'ATR 72',
+      'AT76': 'ATR 72-600',
+      'AT45': 'ATR 42-500'
+    };
+
+    let importedCount = 0;
+
+    for (const { item, type } of allInstances) {
+      // Skip marketing-only codeshare duplicates so only actual operating flights are displayed
+      if (item.codeshare?.operatingFlight) continue;
+
+      const carrierCode = (item.carrier?.iata || item.carrier?.icao || '').toUpperCase();
+      const flightNumber = item.flightNumber;
+      if (!carrierCode || !flightNumber) continue;
+
+      const displayFlightNumber = `${carrierCode}-${flightNumber}`;
+      const depDateUtc = item.departure?.date?.utc;
+      const depTimeUtc = item.departure?.time?.utc;
+      const arrDateUtc = item.arrival?.date?.utc;
+      const arrTimeUtc = item.arrival?.time?.utc;
+
+      let schedUtc: string;
+      if (type === 'departure') {
+        if (depDateUtc && depTimeUtc) {
+          schedUtc = new Date(`${depDateUtc}T${depTimeUtc}:00.000Z`).toISOString();
+        } else {
+          schedUtc = new Date(`${item.departure?.date?.local}T${item.departure?.time?.local}:00.000+05:00`).toISOString();
+        }
+      } else {
+        if (arrDateUtc && arrTimeUtc) {
+          schedUtc = new Date(`${arrDateUtc}T${arrTimeUtc}:00.000Z`).toISOString();
+        } else {
+          schedUtc = new Date(`${item.arrival?.date?.local}T${item.arrival?.time?.local}:00.000+05:00`).toISOString();
+        }
+      }
+
+      const uniqueTimeKey = schedUtc.slice(11, 16).replace(':', '');
+      const cleanKey = `${carrierCode}${flightNumber}-${type === 'departure' ? 'd' : 'a'}-${uniqueTimeKey}`.toLowerCase().replace(/[^a-z0-9-]/g, '');
+
+      const origIata = (item.departure?.airport?.iata || (type === 'departure' ? 'KHI' : 'AIRSPACE')).toUpperCase();
+      const destIata = (item.arrival?.airport?.iata || (type === 'arrival' ? 'KHI' : 'AIRSPACE')).toUpperCase();
+
+      const origCoord = AIRPORT_COORDS[origIata] || KARACHI_COORDS;
+      const destCoord = AIRPORT_COORDS[destIata] || KARACHI_COORDS;
+
+      const acIata = item.aircraftType?.iata || '';
+      const acIcao = item.aircraftType?.icao || '';
+      const acModel = OAG_AIRCRAFT_MAP[acIata] || OAG_AIRCRAFT_MAP[acIcao] || (acIcao ? `Aircraft (${acIcao})` : acIata ? `Aircraft (${acIata})` : 'Commercial Jet');
+
+      const airlineInfo = AIRLINES_MAP[carrierCode] || AIRLINES_MAP[item.carrier?.icao?.toUpperCase() || ''] || {
+        name: carrierCode,
+        code: carrierCode,
+        iata: carrierCode,
+        icao: item.carrier?.icao || carrierCode,
+        logoColor: '#2563eb',
+        country: 'International'
+      };
+
+      const domesticCodes = ['LHE', 'ISB', 'PEW', 'UET', 'MUX', 'LYP', 'SKZ', 'GWD', 'TUK', 'SKT', 'KDU'];
+      const isDomestic = (origIata === 'KHI' && domesticCodes.includes(destIata)) || (destIata === 'KHI' && domesticCodes.includes(origIata));
+
+      const statusInfo = this.computeOagFlightStatus(schedUtc, type, item.elapsedTime || 120);
+      const existing = this.flights.get(cleanKey) || this.findMatchingFlight(displayFlightNumber, displayFlightNumber);
+
+      if (existing && existing.type === type && existing.isLiveRadar) {
+        // Keep live ADS-B telemetry and enrich schedule/gate/aircraft from OAG
+        existing.scheduledTime = schedUtc;
+        existing.estimatedTime = schedUtc;
+        if (acModel && acModel !== 'Commercial Jet') existing.aircraft.model = acModel;
+        if (!existing.origin.city || existing.origin.code === 'AIRSPACE') {
+          existing.origin = { code: origIata, name: origCoord.name, city: origCoord.city, country: origCoord.country };
+        }
+        if (!existing.destination.city || existing.destination.code === 'AIRSPACE') {
+          existing.destination = { code: destIata, name: destCoord.name, city: destCoord.city, country: destCoord.country };
+        }
+        existing.liveDataSource = 'OAG Verified Schedule + Live ADS-B Radar';
+        this.flights.set(existing.id, existing);
+        importedCount++;
+      } else {
+        const terminalRaw = (type === 'departure' ? item.departure?.terminal : item.arrival?.terminal) || 'M';
+        const terminalDisplay = ['M', '0', '1', ''].includes(terminalRaw) ? 'Jinnah Terminal 1' : `Jinnah Terminal ${terminalRaw}`;
+        const concourse = isDomestic ? 'Concourse West (Domestic)' : 'Concourse East (International)';
+        const gate = type === 'departure'
+          ? (item.departure?.gate ? `Gate ${item.departure.gate}` : isDomestic ? 'Dom Gate' : 'Intl Gate')
+          : (item.arrival?.gate ? `Gate ${item.arrival.gate}` : 'Terminal 1');
+        const checkIn = isDomestic ? 'Domestic Counters' : 'Intl Counters';
+        const baggage = isDomestic ? 'Dom Reclaim' : 'Intl Reclaim';
+
+        const currentLat = Number((origCoord.lat + (destCoord.lat - origCoord.lat) * (statusInfo.progressPct / 100)).toFixed(4));
+        const currentLng = Number((origCoord.lng + (destCoord.lng - origCoord.lng) * (statusInfo.progressPct / 100)).toFixed(4));
+
+        const flightRecord: Flight = {
+          id: cleanKey,
+          flightNumber: displayFlightNumber,
+          airline: airlineInfo,
+          type,
+          category: isDomestic ? 'domestic' : 'international',
+          origin: {
+            code: origIata,
+            name: origCoord.name,
+            city: origCoord.city,
+            country: origCoord.country
+          },
+          destination: {
+            code: destIata,
+            name: destCoord.name,
+            city: destCoord.city,
+            country: destCoord.country
+          },
+          scheduledTime: schedUtc,
+          estimatedTime: schedUtc,
+          actualTime: statusInfo.actualTime,
+          status: statusInfo.status,
+          delayMinutes: 0,
+          delayReason: null,
+          terminal: terminalDisplay,
+          concourse,
+          gate,
+          checkInCounters: checkIn,
+          baggageBelt: baggage,
+          aircraft: {
+            model: acModel,
+            registration: '',
+            speedKnots: 460,
+            maxAltitudeFt: 39000
+          },
+          telemetry: {
+            lat: currentLat,
+            lng: currentLng,
+            altitudeFt: statusInfo.status === 'En Route' ? 32000 : statusInfo.status === 'Approaching' ? 4000 : 0,
+            groundSpeedKnots: statusInfo.status === 'En Route' ? 450 : statusInfo.status === 'Approaching' ? 180 : 0,
+            heading: type === 'departure' ? 250 : 70,
+            progressPct: statusInfo.progressPct,
+            distanceRemainingNm: item.distance?.greatCircleNauticalMiles || 500
+          },
+          history: [
+            {
+              timestamp: schedUtc,
+              type: 'status',
+              message: `Verified today via OAG Official Aviation Guide (Key: ${item.scheduleInstanceKey?.slice(0, 10) || 'LIVE'}).`
+            }
+          ],
+          updatedAt: new Date().toISOString(),
+          isLiveRadar: false,
+          liveDataSource: 'OAG Official Aviation Guide'
+        };
+
+        this.flights.set(cleanKey, flightRecord);
+        importedCount++;
+      }
+    }
+
+    return importedCount;
+  }
+
+  /**
+   * Syncs official flight schedules for today's PKT date from OAG Flight Info API (paginating all results)
+   * Caches today's verified schedule on disk for 12 hours to protect the 100-call free tier quota.
    */
   public async syncOagFlightSchedule(force = false): Promise<{ success: boolean; message: string; count?: number; callsUsed: number }> {
     if (!this.oagApiKey || this.oagApiKey.trim().length === 0) {
@@ -1335,198 +1713,103 @@ export class KarachiFlightEngine {
       };
     }
 
+    const todayPkt = this.getTodayPktDate();
     const now = Date.now();
-    // Quota protection: Only allow fetching once every 60 minutes unless force is explicitly true
-    if (!force && this.lastOagSyncTime > 0 && now - this.lastOagSyncTime < 60 * 60 * 1000) {
-      const minsRemaining = Math.round((60 * 60 * 1000 - (now - this.lastOagSyncTime)) / 60000);
-      return {
-        success: true,
-        message: `OAG schedule is fresh (cached to preserve your 100 free calls quota). Next auto-refresh in ${minsRemaining}m.`,
-        callsUsed: this.oagCallsUsed
-      };
+
+    if (!force && this.loadOagCacheForToday()) {
+      const minsRemaining = Math.round((12 * 60 * 60 * 1000 - (now - this.lastOagSyncTime)) / 60000);
+      if (minsRemaining > 0) {
+        return {
+          success: true,
+          message: `OAG schedule for ${todayPkt} loaded from verified cache (${this.flights.size} flights, 0 API calls). Next refresh in ${minsRemaining}m.`,
+          count: this.flights.size,
+          callsUsed: this.oagCallsUsed
+        };
+      }
     }
 
     try {
-      const todayDate = new Date().toISOString().split('T')[0];
-      const depUrl = `https://api.oag.com/flight-instances/?DepartureAirport=KHI&DepartureDateTime=${todayDate}&CodeType=IATA&version=v2`;
-      const arrUrl = `https://api.oag.com/flight-instances/?ArrivalAirport=KHI&ArrivalDateTime=${todayDate}&CodeType=IATA&version=v2`;
-
       const headers = {
         'Subscription-Key': this.oagApiKey,
         'Accept': 'application/json'
       };
 
-      // Fetch official departures and arrivals in parallel
-      const [depRes, arrRes] = await Promise.all([
-        fetch(depUrl, { headers, signal: AbortSignal.timeout(6500) }).catch(() => null),
-        fetch(arrUrl, { headers, signal: AbortSignal.timeout(6500) }).catch(() => null)
-      ]);
+      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      this.oagCallsUsed += (depRes ? 1 : 0) + (arrRes ? 1 : 0);
-      this.lastOagSyncTime = now;
+      const fetchAllPages = async (initialUrl: string, type: 'departure' | 'arrival') => {
+        const collected: Array<{ item: any; type: 'departure' | 'arrival' }> = [];
+        let nextUrl: string | null = initialUrl;
+        let pageCount = 0;
+        let completed = false;
 
-      let importedCount = 0;
-      const allInstances: Array<{ item: any; type: 'departure' | 'arrival' }> = [];
-
-      if (depRes && depRes.ok) {
-        const depData = await depRes.json();
-        const items = Array.isArray(depData) ? depData : (depData.data || []);
-        items.forEach((item: any) => allInstances.push({ item, type: 'departure' }));
-      }
-
-      if (arrRes && arrRes.ok) {
-        const arrData = await arrRes.json();
-        const items = Array.isArray(arrData) ? arrData : (arrData.data || []);
-        items.forEach((item: any) => allInstances.push({ item, type: 'arrival' }));
-      }
-
-      const OAG_AIRCRAFT_MAP: Record<string, string> = {
-        '7M8': 'Boeing 737 MAX 8',
-        '7M9': 'Boeing 737 MAX 9',
-        'B38M': 'Boeing 737 MAX 8',
-        'B39M': 'Boeing 737 MAX 9',
-        '77W': 'Boeing 777-300ER',
-        '772': 'Boeing 777-200LR',
-        '788': 'Boeing 787-8 Dreamliner',
-        '789': 'Boeing 787-9 Dreamliner',
-        '78X': 'Boeing 787-10 Dreamliner',
-        '320': 'Airbus A320-200',
-        '32A': 'Airbus A320-200 (Sharklets)',
-        '32N': 'Airbus A320neo',
-        'A20N': 'Airbus A320neo',
-        '321': 'Airbus A321-200',
-        '32Q': 'Airbus A321neo',
-        'A21N': 'Airbus A321neo',
-        '333': 'Airbus A330-300',
-        '332': 'Airbus A330-200',
-        '359': 'Airbus A350-900',
-        'AT76': 'ATR 72-600',
-        'AT45': 'ATR 42-500'
+        while (nextUrl && pageCount < 15) {
+          pageCount++;
+          if (pageCount > 1) await sleep(350);
+          let res: Response | null = await fetch(nextUrl, { headers, signal: AbortSignal.timeout(8000) }).catch(() => null);
+          if (res && res.status === 429) {
+            const retrySec = Number(res.headers.get('retry-after')) || 30;
+            await sleep(Math.min(65, retrySec + 2) * 1000);
+            res = await fetch(nextUrl, { headers, signal: AbortSignal.timeout(8000) }).catch(() => null);
+          }
+          if (!res) break;
+          this.oagCallsUsed++;
+          if (!res.ok) break;
+          const body: any = await res.json();
+          const items = Array.isArray(body) ? body : (body.data || []);
+          items.forEach((item: any) => collected.push({ item, type }));
+          nextUrl = typeof body?.paging?.next === 'string' ? body.paging.next : null;
+          if (!nextUrl) completed = true;
+        }
+        return { collected, completed };
       };
 
-      for (const { item, type } of allInstances) {
-        const carrierCode = (item.carrier?.iata || item.carrier?.icao || '').toUpperCase();
-        const flightNumber = item.flightNumber;
-        if (!carrierCode || !flightNumber) continue;
+      const depUrl = `https://api.oag.com/flight-instances/?DepartureAirport=KHI&DepartureDateTime=${todayPkt}&CodeType=IATA&version=v2`;
+      const arrUrl = `https://api.oag.com/flight-instances/?ArrivalAirport=KHI&ArrivalDateTime=${todayPkt}&CodeType=IATA&version=v2`;
 
-        const displayFlightNumber = `${carrierCode}-${flightNumber}`;
-        const cleanKey = `${carrierCode}${flightNumber}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const existingCache = !force ? this.readRawOagCache() : null;
+      const canReuseDep =
+        existingCache &&
+        existingCache.datePkt === todayPkt &&
+        existingCache.depComplete &&
+        Array.isArray(existingCache.instances);
 
-        const depDate = item.departure?.date?.utc || item.departure?.date?.local;
-        const depTime = item.departure?.time?.utc || item.departure?.time?.local;
-        const arrDate = item.arrival?.date?.utc || item.arrival?.date?.local;
-        const arrTime = item.arrival?.time?.utc || item.arrival?.time?.local;
+      let depInstances: Array<{ item: any; type: 'departure' | 'arrival' }> = [];
+      let depComplete = false;
 
-        const schedUtc = type === 'departure'
-          ? (item.departure?.date?.utc && item.departure?.time?.utc ? new Date(`${item.departure.date.utc}T${item.departure.time.utc}:00.000Z`).toISOString() : new Date(`${depDate}T${depTime}:00.000+05:00`).toISOString())
-          : (item.arrival?.date?.utc && item.arrival?.time?.utc ? new Date(`${item.arrival.date.utc}T${item.arrival.time.utc}:00.000Z`).toISOString() : new Date(`${arrDate}T${arrTime}:00.000+05:00`).toISOString());
-
-        const origIata = item.departure?.airport?.iata || (type === 'departure' ? 'KHI' : 'AIRSPACE');
-        const destIata = item.arrival?.airport?.iata || (type === 'arrival' ? 'KHI' : 'AIRSPACE');
-
-        const origCoord = AIRPORT_COORDS[origIata] || KARACHI_COORDS;
-        const destCoord = AIRPORT_COORDS[destIata] || KARACHI_COORDS;
-
-        const acCode = item.aircraftType?.iata || item.aircraftType?.icao || '';
-        const acModel = OAG_AIRCRAFT_MAP[acCode] || (acCode ? `Commercial Jet (${acCode})` : 'Commercial Jet');
-
-        const airlineInfo = AIRLINES_MAP[carrierCode] || {
-          name: carrierCode === 'FZ' ? 'Flydubai' : carrierCode === 'SV' ? 'Saudia' : carrierCode,
-          code: carrierCode,
-          iata: carrierCode,
-          icao: item.carrier?.icao || carrierCode,
-          logoColor: carrierCode === 'FZ' ? '#2563eb' : carrierCode === 'SV' ? '#15803d' : '#475569',
-          country: carrierCode === 'SV' ? 'Saudi Arabia' : carrierCode === 'FZ' ? 'United Arab Emirates' : 'International'
-        };
-
-        const isDomestic = (origIata === 'KHI' && ['LHE', 'ISB', 'PEW', 'UET', 'MUX', 'LYP', 'SKZ', 'GWD', 'TUK', 'SKT'].includes(destIata)) ||
-          (destIata === 'KHI' && ['LHE', 'ISB', 'PEW', 'UET', 'MUX', 'LYP', 'SKZ', 'GWD', 'TUK', 'SKT'].includes(origIata));
-
-        const existing = this.flights.get(cleanKey);
-        if (existing) {
-          existing.scheduledTime = schedUtc;
-          existing.aircraft.model = acModel;
-          if (item.departure?.terminal === 'M' || item.arrival?.terminal === 'M') {
-            existing.terminal = 'Jinnah Terminal 1';
-          }
-          if (item.departure?.gate) existing.gate = `Gate ${item.departure.gate}`;
-          if (item.arrival?.baggageClaim) existing.baggageBelt = `Carousel ${item.arrival.baggageClaim}`;
-          existing.liveDataSource = 'OAG Verified Flight Info + ADS-B Radar';
-          this.flights.set(cleanKey, existing);
-          importedCount++;
-        } else {
-          // Add newly discovered flight instance
-          const terminalRaw = (type === 'departure' ? item.departure?.terminal : item.arrival?.terminal) || 'M';
-          const terminalDisplay = ['M', '0', '1'].includes(terminalRaw) ? 'Jinnah Terminal 1' : `Jinnah Terminal ${terminalRaw}`;
-          const concourse = isDomestic ? 'Concourse West (Domestic)' : 'Concourse East (International)';
-          const gate = type === 'departure' ? (item.departure?.gate ? `Gate ${item.departure.gate}` : isDomestic ? 'Gate 16' : 'Gate 25') : 'Stand Radar';
-          const checkIn = isDomestic ? 'Row B (B1-B8)' : 'Row D (D1-D10)';
-          const baggage = isDomestic ? 'Carousel 2' : 'Carousel 5';
-
-          const flightRecord: Flight = {
-            id: cleanKey,
-            flightNumber: displayFlightNumber,
-            airline: airlineInfo,
-            type,
-            category: isDomestic ? 'domestic' : 'international',
-            origin: {
-              code: origIata,
-              name: origCoord.name,
-              city: origCoord.city,
-              country: origCoord.country
-            },
-            destination: {
-              code: destIata,
-              name: destCoord.name,
-              city: destCoord.city,
-              country: destCoord.country
-            },
-            scheduledTime: schedUtc,
-            estimatedTime: schedUtc,
-            actualTime: null,
-            status: 'Scheduled',
-            delayMinutes: 0,
-            delayReason: null,
-            terminal: terminalDisplay,
-            concourse,
-            gate,
-            checkInCounters: checkIn,
-            baggageBelt: baggage,
-            aircraft: {
-              model: acModel,
-              registration: `AP-${displayFlightNumber.replace(/[^A-Z0-9]/g, '').slice(-3)}`,
-              speedKnots: 460,
-              maxAltitudeFt: 39000
-            },
-            telemetry: {
-              lat: origCoord.lat,
-              lng: origCoord.lng,
-              altitudeFt: 0,
-              groundSpeedKnots: 0,
-              heading: 0,
-              progressPct: 0,
-              distanceRemainingNm: item.distance?.greatCircleNauticalMiles || 600
-            },
-            history: [
-              {
-                timestamp: schedUtc,
-                type: 'status',
-                message: `Flight schedule verified via OAG Official Aviation Guide (Schedule Key: ${item.scheduleInstanceKey?.slice(0, 10)}...).`
-              }
-            ],
-            updatedAt: new Date().toISOString(),
-            isLiveRadar: false,
-            liveDataSource: 'OAG Official Aviation Guide'
-          };
-
-          this.flights.set(cleanKey, flightRecord);
-          importedCount++;
+      if (canReuseDep) {
+        depInstances = existingCache.instances.filter((x: any) => x.type === 'departure');
+        depComplete = true;
+      } else {
+        const depRes = await fetchAllPages(depUrl, 'departure');
+        depInstances = depRes.collected;
+        depComplete = depRes.completed;
+        if (depInstances.length > 0) {
+          this.saveOagCache(todayPkt, depInstances, depComplete, false);
+          this.ingestOagInstances(depInstances);
         }
       }
 
+      const arrRes = await fetchAllPages(arrUrl, 'arrival');
+      const arrInstances = arrRes.collected;
+      const arrComplete = arrRes.completed;
+
+      const allInstances = [...depInstances, ...arrInstances];
+      this.lastOagSyncTime = Date.now();
+
+      if (allInstances.length === 0) {
+        return {
+          success: false,
+          message: `OAG API returned 0 instances (quota or network check). Preserving existing verified radar data.`,
+          callsUsed: this.oagCallsUsed
+        };
+      }
+
+      this.saveOagCache(todayPkt, allInstances, depComplete, arrComplete);
+      const importedCount = this.ingestOagInstances(allInstances);
+
       return {
         success: true,
-        message: `Successfully synchronized ${importedCount} flights with OAG official airline schedules (Departures & Arrivals).`,
+        message: `Synchronized ${importedCount} verified OAG flights for ${todayPkt} (${depInstances.length} departures, ${arrInstances.length} arrivals).`,
         count: importedCount,
         callsUsed: this.oagCallsUsed
       };
@@ -1840,20 +2123,24 @@ export class KarachiFlightEngine {
         // Enrich with adsbdb (open-source database by Jack Wills / api.adsbdb.com)
         const adsbRoute = await this.lookupAdsbDbRoute(fno || callsign || hex);
 
-        const origCode = adsbRoute?.origin?.code || from || (isFromKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
-        const destCode = adsbRoute?.destination?.code || to || (isToKhi ? 'KHI' : isNearKhi ? 'KHI' : 'AIRSPACE');
+        const origCode = from || adsbRoute?.origin?.code || (isFromKhi ? 'KHI' : 'AIRSPACE');
+        const destCode = to || adsbRoute?.destination?.code || (isToKhi ? 'KHI' : 'AIRSPACE');
+
+        const isKnownOverflight =
+          (origCode !== 'KHI' && origCode !== 'AIRSPACE' && destCode !== 'KHI' && destCode !== 'AIRSPACE') ||
+          (!isFromKhi && !isToKhi && alt > 18000);
 
         const origCoord = AIRPORT_COORDS[origCode] || KARACHI_COORDS;
         const destCoord = AIRPORT_COORDS[destCode] || KARACHI_COORDS;
 
-        const effectiveOrigin = adsbRoute?.origin || {
+        const effectiveOrigin = (from ? undefined : adsbRoute?.origin) || {
           code: origCode,
           name: origCoord.name,
           city: origCoord.city,
           country: origCoord.country
         };
 
-        const effectiveDest = adsbRoute?.destination || {
+        const effectiveDest = (to ? undefined : adsbRoute?.destination) || {
           code: destCode,
           name: destCoord.name,
           city: destCoord.city,
@@ -1874,11 +2161,8 @@ export class KarachiFlightEngine {
 
         const nowIso = new Date().toISOString();
 
-        // Check if matching scheduled flight exists in our directory
-        const existing = this.flights.get(normalizedKey) || Array.from(this.flights.values()).find(f =>
-          f.flightNumber.replace(/[^a-z0-9]/gi, '').toLowerCase() === normalizedKey ||
-          (fno && f.flightNumber.replace(/[^a-z0-9]/gi, '').toLowerCase() === fno.replace(/[^a-z0-9]/gi, '').toLowerCase())
-        );
+        // Check if matching scheduled flight exists in our directory (IATA <-> ICAO + registration)
+        const existing = this.findMatchingFlight(callsign, fno, reg);
 
         if (existing) {
           // Update existing flight with live telemetry
@@ -1927,7 +2211,7 @@ export class KarachiFlightEngine {
             delayMinutes: 0,
             delayReason: null,
             terminal: 'Jinnah Terminal 1',
-            concourse: origCode === 'KHI' || destCode === 'KHI' ? 'Concourse East (International)' : 'Airspace Radar Transit',
+            concourse: isKnownOverflight ? 'Karachi FIR Transit' : origCode === 'KHI' || destCode === 'KHI' ? 'Concourse East (International)' : 'Airspace Radar Transit',
             gate: 'Stand Radar',
             checkInCounters: 'Live ADS-B Radar',
             baggageBelt: 'Carousel Live',
@@ -1955,7 +2239,8 @@ export class KarachiFlightEngine {
             ],
             updatedAt: nowIso,
             isLiveRadar: true,
-            liveDataSource: `Flightradar24 ADS-B Live (${radar || 'Receiver'})`
+            liveDataSource: `Flightradar24 ADS-B Live (${radar || 'Receiver'})`,
+            isOverflight: isKnownOverflight
           };
 
           this.flights.set(normalizedKey, newFlight);
@@ -1976,17 +2261,20 @@ export class KarachiFlightEngine {
     status?: string;
     search?: string;
     window?: '3h' | '6h' | 'all';
+    includeOverflights?: boolean;
   }): Flight[] {
     let result = Array.from(this.flights.values());
 
-    // Never return ground vehicles or airport support cars
+    // Never return ground vehicles or non-Karachi overflights on the airport board unless requested
     result = result.filter(f => {
       const isGroundVeh =
         /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.flightNumber) ||
         /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.airline.code) ||
         f.aircraft.registration === 'N644PK' ||
         (f.origin.code === 'KHI' && f.destination.code === 'KHI' && f.telemetry && f.telemetry.altitudeFt < 1000 && f.telemetry.groundSpeedKnots < 130);
-      return !isGroundVeh;
+      if (isGroundVeh) return false;
+      if (!params?.includeOverflights && f.isOverflight) return false;
+      return true;
     });
 
     // Operational window filter (default to 'all' so full schedule is visible):
@@ -2058,11 +2346,18 @@ export class KarachiFlightEngine {
   }
 
   public getAirportStats(): AirportStats {
-    const list = Array.from(this.flights.values());
+    const list = Array.from(this.flights.values()).filter(f => {
+      const isGroundVeh =
+        /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.flightNumber) ||
+        /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.airline.code) ||
+        f.aircraft.registration === 'N644PK' ||
+        (f.origin.code === 'KHI' && f.destination.code === 'KHI' && f.telemetry && f.telemetry.altitudeFt < 1000 && f.telemetry.groundSpeedKnots < 130);
+      return !isGroundVeh && !f.isOverflight;
+    });
     const departures = list.filter(f => f.type === 'departure');
     const arrivals = list.filter(f => f.type === 'arrival');
     const delayed = list.filter(f => f.delayMinutes > 0);
-    const onTimeRate = list.length > 0 ? Math.round(((list.length - delayed.length) / list.length) * 100) : 94;
+    const onTimeRate = list.length > 0 ? Math.round(((list.length - delayed.length) / list.length) * 100) : 100;
     const totalDelay = list.reduce((acc, f) => acc + f.delayMinutes, 0);
     const avgDelay = delayed.length > 0 ? Math.round(totalDelay / delayed.length) : 0;
 

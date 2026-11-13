@@ -56,10 +56,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ stats, onQuickFilter, on
           <div>
             <p className="text-slate-300 font-semibold">Active Movements</p>
             <p className="text-lg font-bold text-white font-mono tabular-nums mt-0.5">
-              {(stats?.activeDeparturesCount ?? 35) + (stats?.activeArrivalsCount ?? 31)} Flights
+              {(stats?.activeDeparturesCount ?? 0) + (stats?.activeArrivalsCount ?? 0)} Flights
             </p>
             <p className="text-xs text-slate-300 font-medium">
-              {stats?.activeDeparturesCount ?? 35} Departures · {stats?.activeArrivalsCount ?? 31} Arrivals
+              {stats?.activeDeparturesCount ?? 0} Departures · {stats?.activeArrivalsCount ?? 0} Arrivals
             </p>
           </div>
           <div className="w-8 h-8 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/25">
@@ -72,10 +72,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ stats, onQuickFilter, on
           <div>
             <p className="text-slate-300 font-semibold">On-Time Reliability</p>
             <p className="text-lg font-bold text-emerald-400 font-mono tabular-nums mt-0.5">
-              {stats?.onTimeRate || 85}%
+              {stats?.onTimeRate ?? 100}%
             </p>
             <p className="text-xs text-slate-300 font-medium">
-              Avg delay: {stats?.averageGateDelayMins || 16} min
+              Avg delay: {stats?.averageGateDelayMins ?? 0} min
             </p>
           </div>
           <div className="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/25">

@@ -57,7 +57,7 @@ export default function App() {
     status: 'all',
     searchQuery: '',
     watchlistOnly: false,
-    window: 'all',
+    window: '3h',
   });
   const [isSyncingFeed, setIsSyncingFeed] = useState<boolean>(false);
 
@@ -367,6 +367,10 @@ export default function App() {
             watchlist={watchlist}
             onToggleWatchlist={handleToggleWatchlist}
             onSelectFlight={setSelectedFlight}
+            onOpenRadar={flight => {
+              setSelectedFlight(flight);
+              setActiveTab('radar');
+            }}
             onTriggerTestAlert={handleSimulateEvent}
             stats={stats}
             onRefreshFeed={handleSyncFeed}
@@ -380,6 +384,9 @@ export default function App() {
             flights={flights}
             selectedFlight={selectedFlight}
             onSelectFlight={setSelectedFlight}
+            onBackToBoards={() => setActiveTab('boards')}
+            watchlist={watchlist}
+            onToggleWatchlist={handleToggleWatchlist}
           />
         )}
 
@@ -419,15 +426,19 @@ export default function App() {
         )}
       </main>
 
-      {/* Flight Detail Modal / Drawer */}
+      {/* Flight Detail Modal / Drawer (hidden when viewing interactive Radar map) */}
       <FlightDetailModal
-        flight={selectedFlight}
+        flight={activeTab !== 'radar' ? selectedFlight : null}
         onClose={() => setSelectedFlight(null)}
         isWatchlisted={selectedFlight ? watchlist.includes(selectedFlight.id) : false}
         onToggleWatchlist={handleToggleWatchlist}
         onSimulateEvent={handleSimulateEvent}
         weather={weather}
         onViewWeather={() => setActiveTab('weather')}
+        onOpenRadar={flight => {
+          setSelectedFlight(flight);
+          setActiveTab('radar');
+        }}
       />
 
       {/* Connected APIs & Feeds Modal */}
@@ -455,9 +466,10 @@ export default function App() {
                   <button
                     onClick={() => {
                       handleSelectFlightById(activeToast.flightId);
+                      setActiveTab('radar');
                       setActiveToast(null);
                     }}
-                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 uppercase tracking-wider"
+                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 uppercase tracking-wider cursor-pointer"
                   >
                     View Radar Track →
                   </button>
