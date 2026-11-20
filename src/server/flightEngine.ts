@@ -59,6 +59,23 @@ export const AIRPORT_COORDS: Record<string, { lat: number; lng: number; city: st
   KUL: { lat: 2.7456, lng: 101.7099, city: 'Kuala Lumpur', country: 'Malaysia', name: 'Kuala Lumpur International Airport' },
   DEL: { lat: 28.5562, lng: 77.1000, city: 'Delhi', country: 'India', name: 'Indira Gandhi International Airport' },
   BOM: { lat: 19.0896, lng: 72.8656, city: 'Mumbai', country: 'India', name: 'Chhatrapati Shivaji Maharaj International Airport' },
+  AMD: { lat: 23.0772, lng: 72.6347, city: 'Ahmedabad', country: 'India', name: 'Sardar Vallabhbhai Patel International Airport' },
+  BLR: { lat: 13.1986, lng: 77.7066, city: 'Bengaluru', country: 'India', name: 'Kempegowda International Airport' },
+  HYD: { lat: 17.2403, lng: 78.4294, city: 'Hyderabad', country: 'India', name: 'Rajiv Gandhi International Airport' },
+  MAA: { lat: 12.9941, lng: 80.1709, city: 'Chennai', country: 'India', name: 'Chennai International Airport' },
+  COK: { lat: 10.1520, lng: 76.4019, city: 'Kochi', country: 'India', name: 'Cochin International Airport' },
+  CCU: { lat: 22.6547, lng: 88.4467, city: 'Kolkata', country: 'India', name: 'Netaji Subhas Chandra Bose International Airport' },
+  JAI: { lat: 26.8242, lng: 75.8122, city: 'Jaipur', country: 'India', name: 'Jaipur International Airport' },
+  GOI: { lat: 15.3808, lng: 73.8314, city: 'Goa', country: 'India', name: 'Goa International Airport' },
+  SIN: { lat: 1.3644, lng: 103.9915, city: 'Singapore', country: 'Singapore', name: 'Singapore Changi Airport' },
+  FRA: { lat: 50.0379, lng: 8.5622, city: 'Frankfurt', country: 'Germany', name: 'Frankfurt Airport' },
+  MUC: { lat: 48.3537, lng: 11.7750, city: 'Munich', country: 'Germany', name: 'Munich Airport' },
+  CDG: { lat: 49.0097, lng: 2.5479, city: 'Paris', country: 'France', name: 'Paris Charles de Gaulle Airport' },
+  AMS: { lat: 52.3105, lng: 4.7683, city: 'Amsterdam', country: 'Netherlands', name: 'Amsterdam Airport Schiphol' },
+  ZRH: { lat: 47.4582, lng: 8.5555, city: 'Zurich', country: 'Switzerland', name: 'Zurich Airport' },
+  FCO: { lat: 41.8003, lng: 12.2389, city: 'Rome', country: 'Italy', name: 'Leonardo da Vinci–Fiumicino Airport' },
+  SYZ: { lat: 29.5392, lng: 52.5898, city: 'Shiraz', country: 'Iran', name: 'Shiraz International Airport' },
+  BND: { lat: 27.2183, lng: 56.3778, city: 'Bandar Abbas', country: 'Iran', name: 'Bandar Abbas International Airport' },
   KHI: { lat: 24.9065, lng: 67.1608, city: 'Karachi', country: 'Pakistan', name: 'Jinnah International Airport' },
 };
 
@@ -129,6 +146,57 @@ export const AIRLINES_MAP: Record<string, { name: string; code: string; iata: st
   MSR: { name: 'EgyptAir', code: 'MSR', iata: 'MS', icao: 'MSR', logoColor: '#1e3a8a', country: 'Egypt' },
   MS: { name: 'EgyptAir', code: 'MSR', iata: 'MS', icao: 'MSR', logoColor: '#1e3a8a', country: 'Egypt' },
   BSC: { name: 'Classic Air Cargo', code: 'BSC', iata: 'KW', icao: 'BSC', logoColor: '#374151', country: 'International Cargo' },
+  FJL: { name: 'Fly Jinnah', code: 'FJL', iata: '9P', icao: 'FJL', logoColor: '#d91d24', country: 'Pakistan' },
+  PGT: { name: 'Pegasus Airlines', code: 'PGT', iata: 'PC', icao: 'PGT', logoColor: '#f59e0b', country: 'Turkey' },
+  PC: { name: 'Pegasus Airlines', code: 'PGT', iata: 'PC', icao: 'PGT', logoColor: '#f59e0b', country: 'Turkey' },
+  AIC: { name: 'Air India', code: 'AIC', iata: 'AI', icao: 'AIC', logoColor: '#c8102e', country: 'India' },
+  AI: { name: 'Air India', code: 'AIC', iata: 'AI', icao: 'AIC', logoColor: '#c8102e', country: 'India' },
+  IGO: { name: 'IndiGo', code: 'IGO', iata: '6E', icao: 'IGO', logoColor: '#1d4ed8', country: 'India' },
+  '6E': { name: 'IndiGo', code: 'IGO', iata: '6E', icao: 'IGO', logoColor: '#1d4ed8', country: 'India' },
+  AXB: { name: 'Air India Express', code: 'AXB', iata: 'IX', icao: 'AXB', logoColor: '#e11d48', country: 'India' },
+  IX: { name: 'Air India Express', code: 'AXB', iata: 'IX', icao: 'AXB', logoColor: '#e11d48', country: 'India' },
+  SEJ: { name: 'SpiceJet', code: 'SEJ', iata: 'SG', icao: 'SEJ', logoColor: '#dc2626', country: 'India' },
+  SG: { name: 'SpiceJet', code: 'SEJ', iata: 'SG', icao: 'SEJ', logoColor: '#dc2626', country: 'India' },
+  AKJ: { name: 'Akasa Air', code: 'AKJ', iata: 'QP', icao: 'AKJ', logoColor: '#f97316', country: 'India' },
+  QP: { name: 'Akasa Air', code: 'AKJ', iata: 'QP', icao: 'AKJ', logoColor: '#f97316', country: 'India' },
+  VTI: { name: 'Vistara', code: 'VTI', iata: 'UK', icao: 'VTI', logoColor: '#581c87', country: 'India' },
+  SIA: { name: 'Singapore Airlines', code: 'SIA', iata: 'SQ', icao: 'SIA', logoColor: '#d97706', country: 'Singapore' },
+  SQ: { name: 'Singapore Airlines', code: 'SIA', iata: 'SQ', icao: 'SIA', logoColor: '#d97706', country: 'Singapore' },
+  DLH: { name: 'Lufthansa', code: 'DLH', iata: 'LH', icao: 'DLH', logoColor: '#1e3a8a', country: 'Germany' },
+  LH: { name: 'Lufthansa', code: 'DLH', iata: 'LH', icao: 'DLH', logoColor: '#1e3a8a', country: 'Germany' },
+  BAW: { name: 'British Airways', code: 'BAW', iata: 'BA', icao: 'BAW', logoColor: '#1d4ed8', country: 'United Kingdom' },
+  BA: { name: 'British Airways', code: 'BAW', iata: 'BA', icao: 'BAW', logoColor: '#1d4ed8', country: 'United Kingdom' },
+  AFR: { name: 'Air France', code: 'AFR', iata: 'AF', icao: 'AFR', logoColor: '#1e40af', country: 'France' },
+  AF: { name: 'Air France', code: 'AFR', iata: 'AF', icao: 'AFR', logoColor: '#1e40af', country: 'France' },
+  KLM: { name: 'KLM Royal Dutch Airlines', code: 'KLM', iata: 'KL', icao: 'KLM', logoColor: '#0284c7', country: 'Netherlands' },
+  KL: { name: 'KLM Royal Dutch Airlines', code: 'KLM', iata: 'KL', icao: 'KLM', logoColor: '#0284c7', country: 'Netherlands' },
+  SWR: { name: 'SWISS International Air Lines', code: 'SWR', iata: 'LX', icao: 'SWR', logoColor: '#dc2626', country: 'Switzerland' },
+  LX: { name: 'SWISS International Air Lines', code: 'SWR', iata: 'LX', icao: 'SWR', logoColor: '#dc2626', country: 'Switzerland' },
+  CPA: { name: 'Cathay Pacific', code: 'CPA', iata: 'CX', icao: 'CPA', logoColor: '#0f766e', country: 'Hong Kong SAR' },
+  CX: { name: 'Cathay Pacific', code: 'CPA', iata: 'CX', icao: 'CPA', logoColor: '#0f766e', country: 'Hong Kong SAR' },
+  MAS: { name: 'Malaysia Airlines', code: 'MAS', iata: 'MH', icao: 'MAS', logoColor: '#1d4ed8', country: 'Malaysia' },
+  MH: { name: 'Malaysia Airlines', code: 'MAS', iata: 'MH', icao: 'MAS', logoColor: '#1d4ed8', country: 'Malaysia' },
+  MXD: { name: 'Batik Air Malaysia', code: 'MXD', iata: 'OD', icao: 'MXD', logoColor: '#b81237', country: 'Malaysia' },
+  FDX: { name: 'FedEx Express', code: 'FDX', iata: 'FX', icao: 'FDX', logoColor: '#4c1d95', country: 'United States' },
+  UPS: { name: 'UPS Airlines', code: 'UPS', iata: '5X', icao: 'UPS', logoColor: '#78350f', country: 'United States' },
+  CLX: { name: 'Cargolux', code: 'CLX', iata: 'CV', icao: 'CLX', logoColor: '#0369a1', country: 'Luxembourg' },
+  GEC: { name: 'Lufthansa Cargo', code: 'GEC', iata: 'LH', icao: 'GEC', logoColor: '#1e3a8a', country: 'Germany' },
+  AUA: { name: 'Austrian Airlines', code: 'AUA', iata: 'OS', icao: 'AUA', logoColor: '#dc2626', country: 'Austria' },
+  FIN: { name: 'Finnair', code: 'FIN', iata: 'AY', icao: 'FIN', logoColor: '#1e3a8a', country: 'Finland' },
+  VIR: { name: 'Virgin Atlantic', code: 'VIR', iata: 'VS', icao: 'VIR', logoColor: '#be123c', country: 'United Kingdom' },
+  KAL: { name: 'Korean Air', code: 'KAL', iata: 'KE', icao: 'KAL', logoColor: '#0284c7', country: 'South Korea' },
+  EVA: { name: 'EVA Air', code: 'EVA', iata: 'BR', icao: 'EVA', logoColor: '#15803d', country: 'Taiwan' },
+  CES: { name: 'China Eastern Airlines', code: 'CES', iata: 'MU', icao: 'CES', logoColor: '#dc2626', country: 'China' },
+  AFL: { name: 'Aeroflot', code: 'AFL', iata: 'SU', icao: 'AFL', logoColor: '#1d4ed8', country: 'Russia' },
+  QSM: { name: 'Qeshm Air', code: 'QSM', iata: 'QB', icao: 'QSM', logoColor: '#0284c7', country: 'Iran' },
+  RJA: { name: 'Royal Jordanian', code: 'RJA', iata: 'RJ', icao: 'RJA', logoColor: '#7f1d1d', country: 'Jordan' },
+  MEA: { name: 'Middle East Airlines', code: 'MEA', iata: 'ME', icao: 'MEA', logoColor: '#15803d', country: 'Lebanon' },
+  UZB: { name: 'Uzbekistan Airways', code: 'UZB', iata: 'HY', icao: 'UZB', logoColor: '#0284c7', country: 'Uzbekistan' },
+  KZR: { name: 'Air Astana', code: 'KZR', iata: 'KC', icao: 'KZR', logoColor: '#b45309', country: 'Kazakhstan' },
+  AZQ: { name: 'Silk Way West Airlines', code: 'AZQ', iata: '7L', icao: 'AZQ', logoColor: '#1e40af', country: 'Azerbaijan' },
+  SXS: { name: 'SunExpress', code: 'SXS', iata: 'XQ', icao: 'SXS', logoColor: '#f59e0b', country: 'Turkey' },
+  WZZ: { name: 'Wizz Air', code: 'WZZ', iata: 'W6', icao: 'WZZ', logoColor: '#c026d3', country: 'Hungary' },
+  WAZ: { name: 'Wizz Air Abu Dhabi', code: 'WAZ', iata: '5W', icao: 'WAZ', logoColor: '#c026d3', country: 'United Arab Emirates' },
 };
 
 export const DELAY_REASONS = [
@@ -1387,6 +1455,8 @@ export class KarachiFlightEngine {
           return result;
         }
       }
+      // Cache miss so unknown callsigns are not repeatedly queried every 15s
+      this.adsbdbCache.set(cs, null);
     } catch (e) {
       // ignore network errors
     }
@@ -2021,17 +2091,18 @@ export class KarachiFlightEngine {
   }
 
   /**
-   * Fetches real live ADS-B flights in Karachi FIR and regional corridors from Flightradar24
+   * Fetches real live ADS-B flights within a 500 NM radar radius of Karachi (OPKC) from Flightradar24
    */
   public async syncLiveAirTrafficFeed(): Promise<void> {
     try {
-      const url = 'https://data-cloud.flightradar24.com/zones/fcgi/feed.js?bounds=38.0,18.0,45.0,85.0';
+      // Bounding box covering full 500 NM radius around Karachi (24.9065°N, 67.1608°E)
+      const url = 'https://data-cloud.flightradar24.com/zones/fcgi/feed.js?bounds=34.5,15.5,56.5,78.0';
       const response = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
           'Accept': 'application/json'
         },
-        signal: AbortSignal.timeout(4500)
+        signal: AbortSignal.timeout(5500)
       });
 
       if (!response.ok) {
@@ -2039,23 +2110,25 @@ export class KarachiFlightEngine {
       }
 
       const data = await response.json();
-      this.lastLiveFetchTime = Date.now();
+      const syncStartMs = Date.now();
+      this.lastLiveFetchTime = syncStartMs;
       let matchedLiveCount = 0;
+      let adsbDbLookupsThisCycle = 0;
 
       for (const [radarId, v] of Object.entries(data)) {
         if (!Array.isArray(v)) continue;
         const [hex, lat, lng, track, alt, speed, sq, radar, model, reg, ts, from, to, fno, gnd, vspd, callsign, _, airlineCode] = v;
 
-        // Calculate distance from Karachi aerodrome
+        // Calculate distance from Karachi aerodrome (OPKC)
         const dLat = (lat - KARACHI_COORDS.lat) * 60;
         const dLng = (lng - KARACHI_COORDS.lng) * 60 * Math.cos(KARACHI_COORDS.lat * Math.PI / 180);
         const distNm = Math.round(Math.sqrt(dLat * dLat + dLng * dLng));
 
         const isFromKhi = from === 'KHI';
         const isToKhi = to === 'KHI';
-        const isNearKhi = distNm <= 120;
+        const isWithin500Nm = distNm <= 500;
 
-        if (!isFromKhi && !isToKhi && !isNearKhi) {
+        if (!isFromKhi && !isToKhi && !isWithin500Nm) {
           continue;
         }
 
@@ -2120,15 +2193,27 @@ export class KarachiFlightEngine {
           }
         }
 
-        // Enrich with adsbdb (open-source database by Jack Wills / api.adsbdb.com)
-        const adsbRoute = await this.lookupAdsbDbRoute(fno || callsign || hex);
+        // Enrich with adsbdb only when route is missing & capped per cycle so 500 NM radar stays fast
+        const lookupKey = (fno || callsign || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        let adsbRoute: any = lookupKey && this.adsbdbCache.has(lookupKey) ? this.adsbdbCache.get(lookupKey) : null;
+        if (
+          !adsbRoute &&
+          (!from || !to) &&
+          (isFromKhi || isToKhi || distNm <= 180) &&
+          lookupKey.length >= 3 &&
+          !this.adsbdbCache.has(lookupKey) &&
+          adsbDbLookupsThisCycle < 6
+        ) {
+          adsbDbLookupsThisCycle++;
+          adsbRoute = await this.lookupAdsbDbRoute(lookupKey);
+        }
 
         const origCode = from || adsbRoute?.origin?.code || (isFromKhi ? 'KHI' : 'AIRSPACE');
         const destCode = to || adsbRoute?.destination?.code || (isToKhi ? 'KHI' : 'AIRSPACE');
 
         const isKnownOverflight =
           (origCode !== 'KHI' && origCode !== 'AIRSPACE' && destCode !== 'KHI' && destCode !== 'AIRSPACE') ||
-          (!isFromKhi && !isToKhi && alt > 18000);
+          (!isFromKhi && !isToKhi && (alt > 10000 || distNm > 60));
 
         const origCoord = AIRPORT_COORDS[origCode] || KARACHI_COORDS;
         const destCoord = AIRPORT_COORDS[destCode] || KARACHI_COORDS;
@@ -2167,11 +2252,15 @@ export class KarachiFlightEngine {
         if (existing) {
           // Update existing flight with live telemetry
           existing.telemetry = {
+            ...existing.telemetry,
             lat: Number(lat.toFixed(4)),
             lng: Number(lng.toFixed(4)),
             altitudeFt: alt,
             groundSpeedKnots: speed,
             heading: track,
+            verticalRateFpm: typeof vspd === 'number' ? vspd : existing.telemetry.verticalRateFpm,
+            squawk: sq ? String(sq) : existing.telemetry.squawk,
+            hex: hex ? String(hex).toLowerCase() : existing.telemetry.hex,
             progressPct,
             distanceRemainingNm: distNm
           };
@@ -2179,6 +2268,7 @@ export class KarachiFlightEngine {
           existing.aircraft.model = model || existing.aircraft.model;
           existing.status = liveStatus;
           existing.isLiveRadar = true;
+          existing.squawkCode = sq ? String(sq) : existing.squawkCode;
           existing.liveDataSource = `Flightradar24 + ADS-B DB (${radar || 'Receiver'})`;
           existing.updatedAt = nowIso;
 
@@ -2195,7 +2285,7 @@ export class KarachiFlightEngine {
 
           this.flights.set(existing.id, existing);
         } else {
-          // Dynamic live flight discovered in Karachi FIR
+          // Dynamic live flight discovered within 500 NM Karachi Radar Coverage
           const newFlight: Flight = {
             id: normalizedKey,
             flightNumber: fno || callsign || `RDR-${hex}`,
@@ -2211,7 +2301,7 @@ export class KarachiFlightEngine {
             delayMinutes: 0,
             delayReason: null,
             terminal: 'Jinnah Terminal 1',
-            concourse: isKnownOverflight ? 'Karachi FIR Transit' : origCode === 'KHI' || destCode === 'KHI' ? 'Concourse East (International)' : 'Airspace Radar Transit',
+            concourse: isKnownOverflight ? 'Karachi FIR Transit (500 NM)' : origCode === 'KHI' || destCode === 'KHI' ? 'Concourse East (International)' : 'Airspace Radar Transit',
             gate: 'Stand Radar',
             checkInCounters: 'Live ADS-B Radar',
             baggageBelt: 'Carousel Live',
@@ -2227,6 +2317,9 @@ export class KarachiFlightEngine {
               altitudeFt: alt,
               groundSpeedKnots: speed,
               heading: track,
+              verticalRateFpm: typeof vspd === 'number' ? vspd : undefined,
+              squawk: sq ? String(sq) : undefined,
+              hex: hex ? String(hex).toLowerCase() : undefined,
               progressPct,
               distanceRemainingNm: distNm
             },
@@ -2239,6 +2332,7 @@ export class KarachiFlightEngine {
             ],
             updatedAt: nowIso,
             isLiveRadar: true,
+            squawkCode: sq ? String(sq) : undefined,
             liveDataSource: `Flightradar24 ADS-B Live (${radar || 'Receiver'})`,
             isOverflight: isKnownOverflight
           };
@@ -2247,12 +2341,59 @@ export class KarachiFlightEngine {
         }
       }
 
+      // Prune stale transit overflights that exited the 500 NM radar coverage (> 120s since last packet)
+      const staleCutoffMs = syncStartMs - 120_000;
+      for (const [id, f] of this.flights.entries()) {
+        if (f.isOverflight && new Date(f.updatedAt).getTime() < staleCutoffMs) {
+          this.flights.delete(id);
+        }
+      }
+
       this.liveAircraftCount = matchedLiveCount;
-      this.feedStatusText = `🟢 Live ADS-B Air Traffic Feed Connected (${matchedLiveCount} aircraft active in Karachi FIR)`;
+      this.feedStatusText = `🟢 Live ADS-B Air Traffic Feed Connected (${matchedLiveCount} aircraft active within 500 NM of OPKC)`;
     } catch (err: any) {
       this.feedStatusText = `Air Traffic Feed Sync Warning: ${err.message || 'Retrying...'}`;
       // Do not crash; retain active flight table
     }
+  }
+
+  /**
+   * Returns all live radar aircraft within `radiusNm` (default 500 NM) of Karachi (OPKC),
+   * including both KHI departures/arrivals and regional transit overflights.
+   */
+  public getRadarFlights(radiusNm = 500): Flight[] {
+    const maxNm = Math.max(50, Math.min(600, radiusNm));
+    const list = Array.from(this.flights.values()).filter(f => {
+      const isGroundVeh =
+        /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.flightNumber) ||
+        /^(SCOP|GND|GRND|CAR|TRUCK|SWEEP|TUG|OPS|FIRE|AMB|FOLLOW|MARSHAL|TEST|CALIB|VND|SAFETY|RDR)/i.test(f.airline.code) ||
+        f.aircraft.registration === 'N644PK' ||
+        (f.origin.code === 'KHI' && f.destination.code === 'KHI' && f.telemetry && f.telemetry.altitudeFt < 1000 && f.telemetry.groundSpeedKnots < 130);
+      if (isGroundVeh) return false;
+      if (!f.telemetry || typeof f.telemetry.lat !== 'number' || typeof f.telemetry.lng !== 'number') return false;
+
+      const dLat = (f.telemetry.lat - KARACHI_COORDS.lat) * 60;
+      const dLng = (f.telemetry.lng - KARACHI_COORDS.lng) * 60 * Math.cos(KARACHI_COORDS.lat * Math.PI / 180);
+      const distNm = Math.round(Math.sqrt(dLat * dLat + dLng * dLng));
+
+      // Keep all live aircraft within radiusNm, plus active KHI flights
+      if (f.isLiveRadar) {
+        return distNm <= maxNm || f.origin.code === 'KHI' || f.destination.code === 'KHI';
+      }
+      return (
+        !f.isOverflight &&
+        distNm <= maxNm &&
+        ['En Route', 'Approaching', 'Taxiing'].includes(f.status)
+      );
+    });
+
+    // Sort KHI flights first, then closest to Karachi
+    return list.sort((a, b) => {
+      const aKhi = a.origin.code === 'KHI' || a.destination.code === 'KHI' ? 0 : 1;
+      const bKhi = b.origin.code === 'KHI' || b.destination.code === 'KHI' ? 0 : 1;
+      if (aKhi !== bKhi) return aKhi - bKhi;
+      return (a.telemetry?.distanceRemainingNm ?? 999) - (b.telemetry?.distanceRemainingNm ?? 999);
+    });
   }
 
   public getFlights(params?: {

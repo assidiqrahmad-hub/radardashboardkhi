@@ -35,6 +35,7 @@ import { Bell, AlertCircle, X, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [radarFlights, setRadarFlights] = useState<Flight[]>([]);
   const [stats, setStats] = useState<AirportStats | null>(null);
   const [weather, setWeather] = useState<OpkcWeatherResponse | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = useState<boolean>(false);
@@ -111,8 +112,9 @@ export default function App() {
   // Fetch flight data
   const fetchData = useCallback(async () => {
     try {
-      let [flightsRes, statsRes, notifsRes, rapidStatusRes, oagStatusRes, adsbFiStatusRes] = await Promise.all([
+      let [flightsRes, radarRes, statsRes, notifsRes, rapidStatusRes, oagStatusRes, adsbFiStatusRes] = await Promise.all([
         fetch('/api/flights?window=all').catch(() => null),
+        fetch('/api/radar/flights?radiusNm=500').catch(() => null),
         fetch('/api/airport/stats').catch(() => null),
         fetch('/api/notifications').catch(() => null),
         fetch('/api/rapidapi/status').catch(() => null),
@@ -155,6 +157,13 @@ export default function App() {
         const clientFlights = generateClientSchedule();
         setFlights(clientFlights);
         setStats(generateClientStats(clientFlights));
+      }
+
+      if (radarRes && radarRes.ok) {
+        const loadedRadar: Flight[] = await radarRes.json().catch(() => []);
+        if (Array.isArray(loadedRadar) && loadedRadar.length > 0) {
+          setRadarFlights(loadedRadar);
+        }
       }
 
       if (notifsRes && notifsRes.ok) {
@@ -214,6 +223,15 @@ export default function App() {
         try {
           const updatedFlights: Flight[] = JSON.parse(e.data);
           setFlights(updatedFlights);
+        } catch (err) {
+          // ignore parse error
+        }
+      });
+
+      eventSource.addEventListener('radar_tick', (e: MessageEvent) => {
+        try {
+          const updatedRadar: Flight[] = JSON.parse(e.data);
+          setRadarFlights(updatedRadar);
         } catch (err) {
           // ignore parse error
         }
@@ -381,7 +399,7 @@ export default function App() {
 
         {activeTab === 'radar' && (
           <AirspaceRadar
-            flights={flights}
+            flights={radarFlights.length > 0 ? radarFlights : flights}
             selectedFlight={selectedFlight}
             onSelectFlight={setSelectedFlight}
             onBackToBoards={() => setActiveTab('boards')}

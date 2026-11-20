@@ -62,15 +62,23 @@ async function startServer() {
 
   // Flight list endpoint
   app.get('/api/flights', (req, res) => {
-    const { type, category, status, search, window } = req.query;
+    const { type, category, status, search, window, includeOverflights } = req.query;
     const flights = flightEngine.getFlights({
       type: type as string,
       category: category as string,
       status: status as string,
       search: search as string,
       window: (window as any) || 'all',
+      includeOverflights: includeOverflights === 'true',
     });
     res.json(flights);
+  });
+
+  // Dedicated 500 NM Airspace Radar endpoint (includes KHI flights + regional traffic within 500 NM)
+  app.get('/api/radar/flights', (req, res) => {
+    const radiusNm = Number(req.query.radiusNm) || 500;
+    const radarFlights = flightEngine.getRadarFlights(radiusNm);
+    res.json(radarFlights);
   });
 
   // Single flight telemetry
@@ -109,9 +117,11 @@ async function startServer() {
     try {
       await flightEngine.syncLiveAirTrafficFeed();
       const flights = flightEngine.getFlights();
+      const radarFlights = flightEngine.getRadarFlights(500);
       const stats = flightEngine.getAirportStats();
       broadcastSSE('flights_tick', flights);
-      res.json({ success: true, stats, count: flights.length });
+      broadcastSSE('radar_tick', radarFlights);
+      res.json({ success: true, stats, count: flights.length, radarCount: radarFlights.length });
     } catch (err: any) {
       res.status(500).json({ error: 'Feed sync failed', details: err.message });
     }
@@ -303,7 +313,9 @@ async function startServer() {
   setInterval(() => {
     if (sseClients.size > 0) {
       const activeFlights = flightEngine.getFlights();
+      const radarFlights = flightEngine.getRadarFlights(500);
       broadcastSSE('flights_tick', activeFlights);
+      broadcastSSE('radar_tick', radarFlights);
     }
   }, 4000);
 
